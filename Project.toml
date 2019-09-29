@@ -1,0 +1,7 @@
+name = "Unet"
+uuid = "28ddc128-e2b5-11e9-14fc-f7f8bf0be62e"
+authors = ["Mandar Chitre <mandar@nus.edu.sg>"]
+version = "0.1.0"
+
+[deps]
+Fjage = "e0fd600c-be67-11e9-1f90-d366689e4029"
