@@ -303,26 +303,29 @@ function Fjage.send(sock::UnetSocket, data, to::Integer, protocol::Integer)
 end
 
 "Transmits a datagram to the specified node address using the specified protocol."
-#function Fjage.send(sock::UnetSocket, req::DatagramReq)
-#  if sock.gw == nothing
-#    return false
-#  end
-#  protocol = req.protocol
-#  if protocol != Protocol.DATA && (protocol < Protocol.USER || protocol > Protocol.MAX)
-#    return false
-#  end
-#  if req.recipient == nothing
-#    (sock.provider == nothing) && (sock.provider = agentforservice(sock.gw, Services.TRANSPORT))
-#    (sock.provider == nothing) && (sock.provider = agentforservice(sock.gw, Services.ROUTING))
-#    (sock.provider == nothing) && (sock.provider = agentforservice(sock.gw, Services.LINK))
-#    (sock.provider == nothing) && (sock.provider = agentforservice(sock.gw, Services.PHYSICAL))
-#    (sock.provider == nothing) && (sock.provider = agentforservice(sock.gw, Services.DATAGRAM))
-#    (sock.provider == nothing) && (return false)
-#    req.recipient = sock.provider
-#  end
-#  rsp = request(sock.gw, req)
-#  return rsp != nothing && rsp.performative == Performative.AGREE
-#end
+function Fjage.send(sock::UnetSocket, req::Message)
+  if sock.gw == nothing
+    return false
+  end
+  if !isa(req, DatagramReq)
+    return false
+  end
+  protocol = req.protocol
+  if protocol != Protocol.DATA && (protocol < Protocol.USER || protocol > Protocol.MAX)
+    return false
+  end
+  if req.recipient == nothing
+    (sock.provider == nothing) && (sock.provider = agentforservice(sock.gw, Services.TRANSPORT))
+    (sock.provider == nothing) && (sock.provider = agentforservice(sock.gw, Services.ROUTING))
+    (sock.provider == nothing) && (sock.provider = agentforservice(sock.gw, Services.LINK))
+    (sock.provider == nothing) && (sock.provider = agentforservice(sock.gw, Services.PHYSICAL))
+    (sock.provider == nothing) && (sock.provider = agentforservice(sock.gw, Services.DATAGRAM))
+    (sock.provider == nothing) && (return false)
+    req.recipient = sock.provider
+  end
+  rsp = request(sock.gw, req)
+  return rsp != nothing && rsp.performative == Performative.AGREE
+end
 
 """
 Receives a datagram sent to the local node and the bound protocol number. If the
