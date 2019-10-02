@@ -4,5 +4,6 @@ authors = ["Mandar Chitre <mandar@nus.edu.sg>"]
 version = "0.1.0"
 
 [deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Fjage = "e0fd600c-be67-11e9-1f90-d366689e4029"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"

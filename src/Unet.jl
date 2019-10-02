@@ -5,6 +5,7 @@ module Unet
 
 using Reexport
 @reexport using Fjage
+using Dates
 
 export UnetSocket, Protocol, Services, Address, Topics, ReservationStatus
 export AddressResolutionReq, ParameterReq
@@ -175,8 +176,14 @@ mutable struct UnetSocket
   remoteprotocol::Integer
   timeout::Integer
   provider::Union{AgentID, Nothing}
+  waiting::Bool
   function UnetSocket(host::String, port::Integer)
-    return new(Gateway(host, port), -1, -1, 0, -1, nothing)
+    sock = new(Gateway(host, port), -1, -1, 0, -1, nothing, false)
+    alist = agentsforservice(sock.gw, Services.DATAGRAM)
+    for a in alist
+      subscribe(sock.gw, a)
+    end
+    return sock
   end
 end
 
@@ -270,7 +277,7 @@ end
 """
 Sets the timeout for datagram reception. The default timeout is infinite.
 i.e., the receive() call blocks forever. A timeout of 0 means the
-receive() call is non-blocking.
+receive() call is non-blocking. Negative timeout is considered infinite.
 """
 function settimeout(sock::UnetSocket, ms::Integer)
   if ms < 0
@@ -336,47 +343,34 @@ This call blocks until a datagram is availbale, the socket timeout is reached,
 or until cancel() is called.
 """
 function Fjage.receive(sock::UnetSocket)
-# TODO
-#  try {
-#    if (gw == null) return null;
-#    waiting = Thread.currentThread();
-#    long deadline = -1;
-#    Platform platform = null;
-#    if (timeout == 0) deadline = 0;
-#    else if (timeout > 0) {
-#      platform = gw.getPlatform();
-#      deadline = platform.currentTimeMillis() + timeout;
-#    }
-#    Message ntf = null;
-#    while (!Thread.interrupted()) {
-#      long timeRemaining = -1;
-#      if (timeout == 0) timeRemaining = 0;
-#      else if (timeout > 0) {
-#        timeRemaining = deadline - platform.currentTimeMillis();
-#        if (timeRemaining <= 0) return null;
-#      }
-#      ntf = gw.receive(DatagramNtf.class, timeRemaining);
-#      if (ntf == null) return null;
-#      if (ntf instanceof DatagramNtf) {
-#        DatagramNtf dg = (DatagramNtf)ntf;
-#        int p = dg.getProtocol();
-#        if (p == Protocol.DATA || p >= Protocol.USER) {
-#          if (localprotocol < 0) return dg;
-#          if (localprotocol == p) return dg;
-#        }
-#      }
-#    }
-#  } finally {
-#    waiting = null;
-#  }
-#  return null;
+  if sock.gw == nothing
+    return nothing
+  end
+  t0 = now()
+  while sock.timeout <= 0 || (now()-t0).value < sock.timeout
+    sock.waiting = true
+    ntf = receive(sock.gw, DatagramNtf, sock.timeout)
+    sock.waiting = false
+    if ntf == nothing
+      return nothing
+    end
+    if isa(ntf, DatagramNtf)
+      p = ntf.protocol
+      if p == Protocol.DATA || p >= Protocol.USER
+        if sock.localprotocol < 0 || localprotocol == p
+          return ntf
+        end
+      end
+    end
+  end
+  return nothing
 end
 
 "Cancels an ongoing blocking receive()."
 function cancel(sock::UnetSocket)
-# TODO
-#  if (waiting == null) return;
-#  waiting.interrupt();
+  if sock.waiting
+    push!(sock.gw.queue, nothing)
+  end
 end
 
 "Gets a Gateway to provide low-level access to UnetStack."
