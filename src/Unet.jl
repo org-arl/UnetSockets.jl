@@ -429,4 +429,49 @@ end
 Base.close(sock::UnetSocket) = close(sock)
 Base.bind(sock::UnetSocket, protocol::Integer) = bind(sock, protocol)
 
+# add notation AgentID.property
+
+function Base.getproperty(aid::AgentID, p::Symbol; ndx=-1)
+  if hasfield(AgentID, p)
+    return getfield(aid, p)
+  end
+  if getfield(aid, :owner) == nothing
+    return nothing
+  end
+  rsp = aid << ParameterReq(param=string(p), index=ndx)
+  if rsp == nothing
+    return nothing
+  end
+  return rsp.value
+end
+
+function Base.setproperty!(aid::AgentID, p::Symbol, value; ndx=-1)
+  if hasfield(AgentID, p)
+    setfield!(aid, p, v)
+    return
+  end
+  name = getfield(aid, :name)
+  if getfield(aid, :owner) == nothing
+    @warn "Unable to set $(name).$(p): unowned agent"
+    return
+  end
+  rsp = aid << ParameterReq(param=string(p), value=value, index=ndx)
+  if rsp == nothing
+    @warn "Unable to set $(name).$(p): no response"
+    return
+  end
+  if rsp.value != value
+    @warn "$(name).$(p) set to $(rsp.value)"
+  end
+end
+
+struct _IndexedAgentID
+  aid::AgentID
+  ndx::Int64
+end
+
+Base.getindex(aid::AgentID, ndx::Int64) = _IndexedAgentID(aid, ndx)
+Base.getproperty(iaid::_IndexedAgentID, p::Symbol) = Base.getproperty(getfield(iaid, :aid), p, ndx=getfield(iaid, :ndx))
+Base.setproperty!(iaid::_IndexedAgentID, p::Symbol, v) = Base.setproperty!(getfield(iaid, :aid), p, v, ndx=getfield(iaid, :ndx))
+
 end
