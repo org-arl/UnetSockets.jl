@@ -3,26 +3,124 @@ Julia-Unet API.
 """
 module Unet
 
-using Fjage
+using Reexport
+@reexport using Fjage
 
-# Unet exports
-export UnetSocket, Protocol, Services
+export UnetSocket, Protocol, Services, Address, Topics, ReservationStatus
 export AddressResolutionReq, ParameterReq
-export isclosed, gateway, host, bind, unbind, isbound, connect, disconnect, isconnected, getlocaladdress, getlocalprotocol, getremoteaddress, getremoteprotocol, settimeout, gettimeout, cancel
 
-# messages
-AddressResolutionReq = MessageClass("org.arl.unet.addr.AddressResolutionReq")
-ParameterReq = MessageClass("org.arl.unet.ParameterReq")
-DatagramReq = MessageClass("org.arl.unet.DatagramReq")
+export isclosed, gateway, host, unbind, isbound, connect, disconnect, isconnected, getlocaladdress
+export getlocalprotocol, getremoteaddress, getremoteprotocol, settimeout, gettimeout, cancel
+
+export ParameterReq, ParameterRsp, TestReportNtf, AbnormalTerminationNtf, CapabilityListRsp
+export CapabilityReq, ClearReq, DatagramCancelReq, DatagramDeliveryNtf, DatagramFailureNtf
+export DatagramNtf, DatagramProgressNtf, DatagramReq, ParamChangeNtf, DatagramTraceReq, RouteDiscoveryReq
+export RouteTraceReq, RouteDiscoveryNtf, RouteTraceNtf, FecDecodeReq, RxJanusFrameNtf, TxJanusFrameReq
+export BadFrameNtf, BadRangeNtf, BeaconReq, ClearSyncReq, CollisionNtf, RangeNtf, RangeReq, RxFrameNtf
+export RxFrameStartNtf, SyncInfoReq, SyncInfoRsp, TxFrameNtf, TxFrameReq, TxFrameStartNtf, TxRawFrameReq
+export AddressAllocReq, AddressAllocRsp, AddressResolutionReq, AddressResolutionRsp, BasebandSignal
+export RecordBasebandSignalReq, RxBasebandSignalNtf, TxBasebandSignalReq, ReservationAcceptReq
+export ReservationCancelReq, ReservationReq, ReservationRsp, ReservationStatusNtf, RxAckNtf, TxAckReq
+export RemoteExecReq, RemoteFailureNtf, RemoteFileGetReq, RemoteFileNtf, RemoteFilePutReq, RemoteSuccessNtf
+export RemoteTextNtf, RemoteTextReq, AddScheduledSleepReq, GetSleepScheduleReq, RemoveScheduledSleepReq
+export SleepScheduleRsp, WakeFromSleepNtf, ClearStateReq, SaveStateReq
+
+# Unet messages
+ParameterReq            = @MessageClass("org.arl.unet.ParameterReq")
+ParameterRsp            = @MessageClass("org.arl.unet.ParameterRsp")
+TestReportNtf           = @MessageClass("org.arl.unet.TestReportNtf")
+AbnormalTerminationNtf  = @MessageClass("org.arl.unet.AbnormalTerminationNtf")
+CapabilityListRsp       = @MessageClass("org.arl.unet.CapabilityListRsp")
+CapabilityReq           = @MessageClass("org.arl.unet.CapabilityReq")
+ClearReq                = @MessageClass("org.arl.unet.ClearReq")
+DatagramCancelReq       = @MessageClass("org.arl.unet.DatagramCancelReq")
+DatagramDeliveryNtf     = @MessageClass("org.arl.unet.DatagramDeliveryNtf")
+DatagramFailureNtf      = @MessageClass("org.arl.unet.DatagramFailureNtf")
+DatagramNtf             = @MessageClass("org.arl.unet.DatagramNtf")
+DatagramProgressNtf     = @MessageClass("org.arl.unet.DatagramProgressNtf")
+DatagramReq             = @MessageClass("org.arl.unet.DatagramReq")
+ParamChangeNtf          = @MessageClass("org.arl.unet.ParamChangeNtf")
+DatagramTraceReq        = @MessageClass("org.arl.unet.net.DatagramTraceReq")
+RouteDiscoveryReq       = @MessageClass("org.arl.unet.net.RouteDiscoveryReq")
+RouteTraceReq           = @MessageClass("org.arl.unet.net.RouteTraceReq")
+RouteDiscoveryNtf       = @MessageClass("org.arl.unet.net.RouteDiscoveryNtf")
+RouteTraceNtf           = @MessageClass("org.arl.unet.net.RouteTraceNtf")
+FecDecodeReq            = @MessageClass("org.arl.unet.phy.FecDecodeReq")
+RxJanusFrameNtf         = @MessageClass("org.arl.unet.phy.RxJanusFrameNtf")
+TxJanusFrameReq         = @MessageClass("org.arl.unet.phy.TxJanusFrameReq")
+BadFrameNtf             = @MessageClass("org.arl.unet.phy.BadFrameNtf")
+BadRangeNtf             = @MessageClass("org.arl.unet.phy.BadRangeNtf")
+BeaconReq               = @MessageClass("org.arl.unet.phy.BeaconReq")
+ClearSyncReq            = @MessageClass("org.arl.unet.phy.ClearSyncReq")
+CollisionNtf            = @MessageClass("org.arl.unet.phy.CollisionNtf")
+RangeNtf                = @MessageClass("org.arl.unet.phy.RangeNtf")
+RangeReq                = @MessageClass("org.arl.unet.phy.RangeReq")
+RxFrameNtf              = @MessageClass("org.arl.unet.phy.RxFrameNtf") # TODO: subclass of org_arl_unet_DatagramNtf
+RxFrameStartNtf         = @MessageClass("org.arl.unet.phy.RxFrameStartNtf")
+SyncInfoReq             = @MessageClass("org.arl.unet.phy.SyncInfoReq")
+SyncInfoRsp             = @MessageClass("org.arl.unet.phy.SyncInfoRsp")
+TxFrameNtf              = @MessageClass("org.arl.unet.phy.TxFrameNtf")
+TxFrameReq              = @MessageClass("org.arl.unet.phy.TxFrameReq") # TODO: subclass of org_arl_unet_DatagramReq
+TxFrameStartNtf         = @MessageClass("org.arl.unet.phy.TxFrameStartNtf")
+TxRawFrameReq           = @MessageClass("org.arl.unet.phy.TxRawFrameReq")
+AddressAllocReq         = @MessageClass("org.arl.unet.addr.AddressAllocReq")
+AddressAllocRsp         = @MessageClass("org.arl.unet.addr.AddressAllocRsp")
+AddressResolutionReq    = @MessageClass("org.arl.unet.addr.AddressResolutionReq")
+AddressResolutionRsp    = @MessageClass("org.arl.unet.addr.AddressResolutionRsp")
+BasebandSignal          = @MessageClass("org.arl.unet.bb.BasebandSignal")
+RecordBasebandSignalReq = @MessageClass("org.arl.unet.bb.RecordBasebandSignalReq")
+RxBasebandSignalNtf     = @MessageClass("org.arl.unet.bb.RxBasebandSignalNtf") # TODO: subclass of org_arl_unet_phy_BasebandSignal
+TxBasebandSignalReq     = @MessageClass("org.arl.unet.bb.TxBasebandSignalReq") # TODO: subclass of org_arl_unet_phy_BasebandSignal
+ReservationAcceptReq    = @MessageClass("org.arl.unet.mac.ReservationAcceptReq")
+ReservationCancelReq    = @MessageClass("org.arl.unet.mac.ReservationCancelReq")
+ReservationReq          = @MessageClass("org.arl.unet.mac.ReservationReq")
+ReservationRsp          = @MessageClass("org.arl.unet.mac.ReservationRsp")
+ReservationStatusNtf    = @MessageClass("org.arl.unet.mac.ReservationStatusNtf")
+RxAckNtf                = @MessageClass("org.arl.unet.mac.RxAckNtf")
+TxAckReq                = @MessageClass("org.arl.unet.mac.TxAckReq")
+RemoteExecReq           = @MessageClass("org.arl.unet.remote.RemoteExecReq")
+RemoteFailureNtf        = @MessageClass("org.arl.unet.remote.RemoteFailureNtf")
+RemoteFileGetReq        = @MessageClass("org.arl.unet.remote.RemoteFileGetReq")
+RemoteFileNtf           = @MessageClass("org.arl.unet.remote.RemoteFileNtf")
+RemoteFilePutReq        = @MessageClass("org.arl.unet.remote.RemoteFilePutReq")
+RemoteSuccessNtf        = @MessageClass("org.arl.unet.remote.RemoteSuccessNtf")
+RemoteTextNtf           = @MessageClass("org.arl.unet.remote.RemoteTextNtf")
+RemoteTextReq           = @MessageClass("org.arl.unet.remote.RemoteTextReq")
+AddScheduledSleepReq    = @MessageClass("org.arl.unet.scheduler.AddScheduledSleepReq")
+GetSleepScheduleReq     = @MessageClass("org.arl.unet.scheduler.GetSleepScheduleReq")
+RemoveScheduledSleepReq = @MessageClass("org.arl.unet.scheduler.RemoveScheduledSleepReq")
+SleepScheduleRsp        = @MessageClass("org.arl.unet.scheduler.SleepScheduleRsp")
+WakeFromSleepNtf        = @MessageClass("org.arl.unet.scheduler.WakeFromSleepNtf")
+ClearStateReq           = @MessageClass("org.arl.unet.state.ClearStateReq")
+SaveStateReq            = @MessageClass("org.arl.unet.state.SaveStateReq")
+
+"Well-known addresses."
+module Address
+  const BROADCAST = 0
+end
 
 "Well-known protocol number assignments."
 module Protocol
   const DATA = 0
+  const RANGING = 1
+  const LINK = 2
+  const REMOTE = 3
+  const MAC = 4
+  const ROUTING = 5
+  const TRANSPORT = 6
+  const ROUTE_MAINTENANCE = 7
+  const LINK2 = 8
   const USER = 32
   const MAX = 63
 end
 
-"Unet service names."
+"Well-known topics."
+module Topics
+  const PARAMCHANGE = "org.arl.unet.Topics.PARAMCHANGE"
+  const LIFECYCLE = "org.arl.unet.Topics.LIFECYCLE"
+end
+
+"Well-known service names."
 module Services
   const NODE_INFO = "org.arl.unet.Services.NODE_INFO"
   const ADDRESS_RESOLUTION = "org.arl.unet.Services.ADDRESS_RESOLUTION"
@@ -38,6 +136,16 @@ module Services
   const REMOTE = "org.arl.unet.Services.REMOTE"
   const STATE_MANAGER = "org.arl.unet.Services.STATE_MANAGER"
   const SCHEDULE = "org.arl.unet.Services.SCHEDULE"
+  const SHELL = "org.arl.fjage.shell.Services.SHELL"
+end
+
+"Status indicator for a particular request during the reservation process."
+module ReservationStatus
+  const START = 0             # Start of channel reservation for a reservation request
+  const END = 1               # End of channel reservation for a reservation request
+  const FAILURE = 2           # Failure to reserve channel for a reservation request
+  const CANCEL = 3            # Cancel channel reservation for a reservation request
+  const REQUEST = 4           # Request information from a client agent for a reservation request
 end
 
 """
@@ -267,6 +375,15 @@ function Fjage.agentforservice(sock::UnetSocket, svc::String)
   end
 end
 
+"Gets a list of AgentIDs providing a specified service for low-level access to UnetStack."
+function Fjage.agentsforservice(sock::UnetSocket, svc::String)
+  if sock.gw == nothing
+    return []
+  else
+    return agentsforservice(sock.gw, svc)
+  end
+end
+
 "Gets a named AgentID for low-level access to UnetStack."
 function Fjage.agent(sock::UnetSocket, name::String)
   if sock.gw == nothing
@@ -298,5 +415,6 @@ end
 
 # Base functions to add local methods
 Base.close(sock::UnetSocket) = close(sock)
+Base.bind(sock::UnetSocket, protocol::Integer) = bind(sock, protocol)
 
 end
