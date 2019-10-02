@@ -1,4 +1,5 @@
 # UnetStack Julia API
+_(beta version)_
 
 Julia gateway that can connect to the [UnetStack](https://unetstack.net).
 
@@ -14,7 +15,7 @@ pkg> add https://github.com/org-arl/Unet.jl
 
 In Julia REPL:
 ```julia
-julia> using Fjage, Unet
+julia> using Unet
 julia> sock = UnetSocket("localhost", 1100);
 julia> send(sock, "hello world!", 2)
 true
