@@ -13,7 +13,7 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[Fjage]]
 deps = ["Base64", "Dates", "Distributed", "JSON", "Sockets", "UUIDs"]
-git-tree-sha1 = "bdc5900342aa5333c07f5c083546a0e716cb5891"
+git-tree-sha1 = "4bcf011676afb97fcc991a26f1c5993ed68d2b34"
 repo-rev = "master"
 repo-url = "https://github.com/org-arl/Fjage.jl"
 uuid = "e0fd600c-be67-11e9-1f90-d366689e4029"
