@@ -5,7 +5,7 @@ module Unet
 
 using Reexport
 @reexport using Fjage
-using Dates
+using Dates, Distributed
 
 export UnetSocket, Protocol, Services, Address, Topics, ReservationStatus
 export AddressResolutionReq, ParameterReq
@@ -179,13 +179,17 @@ mutable struct UnetSocket
   waiting::Bool
   function UnetSocket(host::String, port::Integer)
     sock = new(Gateway(host, port), -1, -1, 0, -1, nothing, false)
-    alist = agentsforservice(sock.gw, Services.DATAGRAM)
-    for a in alist
-      subscribe(sock.gw, a)
+    @async begin
+      alist = agentsforservice(sock.gw, Services.DATAGRAM)
+      for a in alist
+        subscribe(sock.gw, a)
+      end
     end
     return sock
   end
 end
+
+Base.show(io::IO, sock::UnetSocket) = Base.show(io, sock.gw)
 
 "Close the socket."
 function close(sock::UnetSocket)
@@ -473,5 +477,6 @@ end
 Base.getindex(aid::AgentID, ndx::Int64) = _IndexedAgentID(aid, ndx)
 Base.getproperty(iaid::_IndexedAgentID, p::Symbol) = Base.getproperty(getfield(iaid, :aid), p, ndx=getfield(iaid, :ndx))
 Base.setproperty!(iaid::_IndexedAgentID, p::Symbol, v) = Base.setproperty!(getfield(iaid, :aid), p, v, ndx=getfield(iaid, :ndx))
+Base.show(io::IO, iaid::_IndexedAgentID) = print(io, "$(getfield(getfield(iaid, :aid), :name))[$(getfield(iaid, :ndx))]")
 
 end
