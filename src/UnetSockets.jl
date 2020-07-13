@@ -1,19 +1,18 @@
 """
-Julia-Unet API.
+Julia UnetSocket API.
 """
-module Unet
+module UnetSockets
 
 using Reexport
 @reexport using Fjage
 using Dates, Distributed
 
 export UnetSocket, Protocol, Services, Address, Topics, ReservationStatus
-export AddressResolutionReq, ParameterReq
 
 export isclosed, gateway, host, unbind, isbound, connect, disconnect, isconnected, getlocaladdress
 export getlocalprotocol, getremoteaddress, getremoteprotocol, settimeout, gettimeout, cancel
 
-export ParameterReq, ParameterRsp, TestReportNtf, AbnormalTerminationNtf, CapabilityListRsp
+export AbnormalTerminationNtf, CapabilityListRsp
 export CapabilityReq, ClearReq, DatagramCancelReq, DatagramDeliveryNtf, DatagramFailureNtf
 export DatagramNtf, DatagramProgressNtf, DatagramReq, ParamChangeNtf, DatagramTraceReq, RouteDiscoveryReq
 export RouteTraceReq, RouteDiscoveryNtf, RouteTraceNtf, FecDecodeReq, RxJanusFrameNtf, TxJanusFrameReq
@@ -27,7 +26,7 @@ export RemoteTextNtf, RemoteTextReq, AddScheduledSleepReq, GetSleepScheduleReq, 
 export SleepScheduleRsp, WakeFromSleepNtf, ClearStateReq, SaveStateReq
 
 # Unet messages
-global ParameterReq, ParameterRsp, TestReportNtf, AbnormalTerminationNtf, CapabilityListRsp
+global AbnormalTerminationNtf, CapabilityListRsp
 global CapabilityReq, ClearReq, DatagramCancelReq, DatagramDeliveryNtf, DatagramFailureNtf
 global DatagramNtf, DatagramProgressNtf, DatagramReq, ParamChangeNtf, DatagramTraceReq, RouteDiscoveryReq
 global RouteTraceReq, RouteDiscoveryNtf, RouteTraceNtf, FecDecodeReq, RxJanusFrameNtf, TxJanusFrameReq
@@ -44,9 +43,6 @@ function __init__()
   BasebandSignal = AbstractMessageClass(@__MODULE__, "org.arl.unet.bb.BasebandSignal")
   global DatagramReq = AbstractMessageClass(@__MODULE__, "org.arl.unet.DatagramReq")
   global DatagramNtf = AbstractMessageClass(@__MODULE__, "org.arl.unet.DatagramNtf")
-  global ParameterReq = MessageClass(@__MODULE__, "org.arl.unet.ParameterReq")
-  global ParameterRsp = MessageClass(@__MODULE__, "org.arl.unet.ParameterRsp")
-  global TestReportNtf = MessageClass(@__MODULE__, "org.arl.unet.TestReportNtf")
   global AbnormalTerminationNtf = MessageClass(@__MODULE__, "org.arl.unet.AbnormalTerminationNtf")
   global CapabilityListRsp = MessageClass(@__MODULE__, "org.arl.unet.CapabilityListRsp")
   global CapabilityReq = MessageClass(@__MODULE__, "org.arl.unet.CapabilityReq")
@@ -322,6 +318,7 @@ function Fjage.send(sock::UnetSocket, req::Message)
     return false
   end
   protocol = req.protocol
+  protocol == nothing && (protocol = Protocol.USER)
   if protocol != Protocol.DATA && (protocol < Protocol.USER || protocol > Protocol.MAX)
     return false
   end
@@ -432,51 +429,5 @@ end
 # Base functions to add local methods
 Base.close(sock::UnetSocket) = close(sock)
 Base.bind(sock::UnetSocket, protocol::Integer) = bind(sock, protocol)
-
-# add notation AgentID.property
-
-function Base.getproperty(aid::AgentID, p::Symbol; ndx=-1)
-  if hasfield(AgentID, p)
-    return getfield(aid, p)
-  end
-  if getfield(aid, :owner) == nothing
-    return nothing
-  end
-  rsp = aid << ParameterReq(param=string(p), index=ndx)
-  if rsp == nothing
-    return nothing
-  end
-  return rsp.value
-end
-
-function Base.setproperty!(aid::AgentID, p::Symbol, value; ndx=-1)
-  if hasfield(AgentID, p)
-    setfield!(aid, p, v)
-    return
-  end
-  name = getfield(aid, :name)
-  if getfield(aid, :owner) == nothing
-    @warn "Unable to set $(name).$(p): unowned agent"
-    return
-  end
-  rsp = aid << ParameterReq(param=string(p), value=value, index=ndx)
-  if rsp == nothing
-    @warn "Unable to set $(name).$(p): no response"
-    return
-  end
-  if rsp.value != value
-    @warn "$(name).$(p) set to $(rsp.value)"
-  end
-end
-
-struct _IndexedAgentID
-  aid::AgentID
-  ndx::Int64
-end
-
-Base.getindex(aid::AgentID, ndx::Int64) = _IndexedAgentID(aid, ndx)
-Base.getproperty(iaid::_IndexedAgentID, p::Symbol) = Base.getproperty(getfield(iaid, :aid), p, ndx=getfield(iaid, :ndx))
-Base.setproperty!(iaid::_IndexedAgentID, p::Symbol, v) = Base.setproperty!(getfield(iaid, :aid), p, v, ndx=getfield(iaid, :ndx))
-Base.show(io::IO, iaid::_IndexedAgentID) = print(io, "$(getfield(getfield(iaid, :aid), :name))[$(getfield(iaid, :ndx))]")
 
 end
