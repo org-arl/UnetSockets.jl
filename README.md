@@ -1,3 +1,6 @@
+![CI](https://github.com/org-arl/UnetSockets.jl/workflows/CI/badge.svg)<br>
+_[ UnetStack 3.1.0 ]_
+
 # UnetStack Julia API
 
 Julia UnetSocket API to connect to [UnetStack](https://unetstack.net).
