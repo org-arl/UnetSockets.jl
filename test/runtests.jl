@@ -144,6 +144,8 @@ finally
 # stop simulator
 
   println("Stopping 2-node simulation...")
-  run(`bash sim.sh stop`)
+  p = run(`bash sim.sh stop`; wait=false)
+  sleep(1)
+  success(p) || println("Could not stop!")
 
 end
