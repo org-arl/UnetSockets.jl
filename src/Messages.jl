@@ -8,7 +8,7 @@ export TxBasebandSignalReq, RxBasebandSignalNtf, RecordBasebandSignalReq, GetPre
 export AddressAllocReq, AddressAllocRsp, AddressResolutionReq, AddressResolutionRsp
 export RangeReq, BeaconReq, RangeNtf, InterrogationNtf, RespondReq
 export ReservationReq, ReservationCancelReq, ReservationAcceptReq, TxAckReq
-export ReservationRsp, ReservationStatusNtf, RxAckNtf, LinkStatusNtf
+export ReservationRsp, ReservationStatusNtf, LinkStatusNtf
 export EditRouteReq, GetRouteReq, RouteRsp, RouteChangeNtf, RouteTraceReq, RouteTraceNtf
 export DatagramTraceReq, RouteDiscoveryReq, RouteDiscoveryNtf
 export RemoteTextReq, RemoteFileGetReq, RemoteFilePutReq, RemoteExecReq
@@ -26,7 +26,7 @@ global TxBasebandSignalReq, RxBasebandSignalNtf, RecordBasebandSignalReq, GetPre
 global AddressAllocReq, AddressAllocRsp, AddressResolutionReq, AddressResolutionRsp
 global RangeReq, BeaconReq, RangeNtf, InterrogationNtf, RespondReq
 global ReservationReq, ReservationCancelReq, ReservationAcceptReq, TxAckReq
-global ReservationRsp, ReservationStatusNtf, RxAckNtf, LinkStatusNtf
+global ReservationRsp, ReservationStatusNtf, LinkStatusNtf
 global EditRouteReq, GetRouteReq, RouteRsp, RouteChangeNtf, RouteTraceReq, RouteTraceNtf
 global DatagramTraceReq, RouteDiscoveryReq, RouteDiscoveryNtf
 global RemoteTextReq, RemoteFileGetReq, RemoteFilePutReq, RemoteExecReq
@@ -82,7 +82,6 @@ function __init__()
   global TxAckReq = MessageClass(@__MODULE__, "org.arl.unet.mac.TxAckReq")
   global ReservationRsp = MessageClass(@__MODULE__, "org.arl.unet.mac.ReservationRsp")
   global ReservationStatusNtf = MessageClass(@__MODULE__, "org.arl.unet.mac.ReservationStatusNtf")
-  global RxAckNtf = MessageClass(@__MODULE__, "org.arl.unet.mac.RxAckNtf")
   global LinkStatusNtf = MessageClass(@__MODULE__, "org.arl.unet.link.LinkStatusNtf")
   global EditRouteReq = MessageClass(@__MODULE__, "org.arl.unet.net.EditRouteReq")
   global GetRouteReq = MessageClass(@__MODULE__, "org.arl.unet.net.GetRouteReq")
