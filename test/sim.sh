@@ -1,7 +1,7 @@
 DIR=`find . -name bin -print`
 
 if [ "$1" == "start" ]; then
-  $DIR/unet $DIR/../samples/2-node-network.groovy &
+  $DIR/unet $DIR/../../../2-node-network.groovy &
 fi
 
 if [ "$1" == "stop" ]; then
