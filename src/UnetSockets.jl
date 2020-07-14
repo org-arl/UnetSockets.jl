@@ -8,7 +8,7 @@ using Reexport
 using Dates, Distributed
 
 export UnetSocket, Protocol, Services, Address, Topics, ReservationStatus
-export isclosed, gateway, host, unbind, isbound, connect, disconnect, isconnected, getlocaladdress
+export isclosed, getgateway, host, unbind, isbound, connect, disconnect, isconnected, getlocaladdress
 export getlocalprotocol, getremoteaddress, getremoteprotocol, settimeout, gettimeout, cancel
 
 include("Messages.jl")
@@ -247,7 +247,7 @@ Receives a datagram sent to the local node and the bound protocol number. If the
 socket is unbound, then datagrams with all unreserved protocols are received. Any
 broadcast datagrams are also received.
 
-This call blocks until a datagram is availbale, the socket timeout is reached,
+This call blocks until a datagram is available, the socket timeout is reached,
 or until cancel() is called.
 """
 function Fjage.receive(sock::UnetSocket)
@@ -265,7 +265,7 @@ function Fjage.receive(sock::UnetSocket)
     if isa(ntf, DatagramNtf)
       p = ntf.protocol
       if p == Protocol.DATA || p >= Protocol.USER
-        if sock.localprotocol < 0 || localprotocol == p
+        if sock.localprotocol < 0 || sock.localprotocol == p
           return ntf
         end
       end
@@ -282,7 +282,7 @@ function cancel(sock::UnetSocket)
 end
 
 "Gets a Gateway to provide low-level access to UnetStack."
-function gateway(sock::UnetSocket)
+function getgateway(sock::UnetSocket)
   return sock.gw
 end
 
