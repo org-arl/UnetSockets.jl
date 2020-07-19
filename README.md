@@ -10,7 +10,7 @@ Julia UnetSocket API to connect to [UnetStack](https://unetstack.net).
 In Julia REPL:
 ```julia
 julia> # press "]" to enter package manager
-pkg> add https://github.com/org-arl/UnetSockets.jl
+pkg> add UnetSockets
 ```
 
 ## Example usage
