@@ -15,6 +15,7 @@ export RemoteTextReq, RemoteFileGetReq, RemoteFilePutReq, RemoteExecReq
 export RemoteTextNtf, RemoteFileNtf, RemoteSuccessNtf, RemoteFailureNtf
 export AddScheduledSleepReq, RemoveScheduledSleepReq, GetSleepScheduleReq, SleepScheduleRsp, WakeFromSleepNtf
 export ClearStateReq, SaveStateReq
+export TestReportNtf
 
 global AbnormalTerminationNtf, AgentLifecycleNtf, AgentStartNtf, AgentTerminationNtf
 global FailureNtf, RefuseRsp, CapabilityListRsp, CapabilityReq, ParamChangeNtf
@@ -33,6 +34,7 @@ global RemoteTextReq, RemoteFileGetReq, RemoteFilePutReq, RemoteExecReq
 global RemoteTextNtf, RemoteFileNtf, RemoteSuccessNtf, RemoteFailureNtf
 global AddScheduledSleepReq, RemoveScheduledSleepReq, GetSleepScheduleReq, SleepScheduleRsp, WakeFromSleepNtf
 global ClearStateReq, SaveStateReq
+global TestReportNtf
 
 function __init__()
   global AbnormalTerminationNtf = MessageClass(@__MODULE__, "org.arl.unet.AbnormalTerminationNtf")
@@ -107,4 +109,5 @@ function __init__()
   global WakeFromSleepNtf = MessageClass(@__MODULE__, "org.arl.unet.scheduler.WakeFromSleepNtf")
   global SaveStateReq = MessageClass(@__MODULE__, "org.arl.unet.state.SaveStateReq")
   global ClearStateReq = MessageClass(@__MODULE__, "org.arl.unet.state.ClearStateReq")
+  global TestReportNtf = MessageClass(@__MODULE__, "org.arl.unet.TestReportNtf")
 end
