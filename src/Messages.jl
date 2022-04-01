@@ -4,7 +4,7 @@ export DatagramReq, DatagramNtf, ClearReq, DatagramCancelReq
 export DatagramDeliveryNtf, DatagramFailureNtf, DatagramProgressNtf
 export TxFrameReq, TxRawFrameReq, TxFrameStartNtf, TxFrameNtf, RxFrameStartNtf, RxFrameNtf
 export BadFrameNtf, CollisionNtf, TxJanusFrameReq, RxJanusFrameNtf, FecDecodeReq
-export TxBasebandSignalReq, RxBasebandSignalNtf, RecordBasebandSignalReq, GetPreambleSignalReq
+export TxBasebandSignalReq, RxBasebandSignalReq, RxBasebandSignalNtf, RecordBasebandSignalReq, GetPreambleSignalReq
 export AddressAllocReq, AddressAllocRsp, AddressResolutionReq, AddressResolutionRsp
 export RangeReq, BeaconReq, RangeNtf, InterrogationNtf, RespondReq
 export ReservationReq, ReservationCancelReq, ReservationAcceptReq, TxAckReq
@@ -23,7 +23,7 @@ global DatagramReq, DatagramNtf, ClearReq, DatagramCancelReq
 global DatagramDeliveryNtf, DatagramFailureNtf, DatagramProgressNtf
 global TxFrameReq, TxRawFrameReq, TxFrameStartNtf, TxFrameNtf, RxFrameStartNtf, RxFrameNtf
 global BadFrameNtf, CollisionNtf, TxJanusFrameReq, RxJanusFrameNtf, FecDecodeReq
-global TxBasebandSignalReq, RxBasebandSignalNtf, RecordBasebandSignalReq, GetPreambleSignalReq
+global TxBasebandSignalReq, RxBasebandSignalReq, RxBasebandSignalNtf, RecordBasebandSignalReq, GetPreambleSignalReq
 global AddressAllocReq, AddressAllocRsp, AddressResolutionReq, AddressResolutionRsp
 global RangeReq, BeaconReq, RangeNtf, InterrogationNtf, RespondReq
 global ReservationReq, ReservationCancelReq, ReservationAcceptReq, TxAckReq
@@ -66,6 +66,7 @@ function __init__()
   global FecDecodeReq = MessageClass(@__MODULE__, "org.arl.unet.phy.FecDecodeReq")
   BasebandSignal = AbstractMessageClass(@__MODULE__, "org.arl.unet.bb.BasebandSignal")
   global TxBasebandSignalReq = MessageClass(@__MODULE__, "org.arl.unet.bb.TxBasebandSignalReq", BasebandSignal)
+  global RxBasebandSignalReq = MessageClass(@__MODULE__, "org.arl.yoda.RxBasebandSignalReq", BasebandSignal)
   global RxBasebandSignalNtf = MessageClass(@__MODULE__, "org.arl.unet.bb.RxBasebandSignalNtf", BasebandSignal)
   global RecordBasebandSignalReq = MessageClass(@__MODULE__, "org.arl.unet.bb.RecordBasebandSignalReq")
   global GetPreambleSignalReq = MessageClass(@__MODULE__, "org.arl.unet.bb.GetPreambleSignalReq")
