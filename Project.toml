@@ -11,5 +11,5 @@ Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [compat]
 julia = "1.3"
-Fjage = "0.1"
+Fjage = "0.2"
 Reexport = "0.2"
