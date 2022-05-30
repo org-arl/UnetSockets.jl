@@ -7,5 +7,4 @@ fi
 if [ "$1" == "stop" ]; then
   PID=`ps -o pid,command | grep unet | grep -v grep | cut -d' ' -f1`
   kill $PID
-  cat "$DIR/../logs/log-0.txt"
 fi

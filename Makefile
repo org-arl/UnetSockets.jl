@@ -7,4 +7,5 @@ test:
 	julia test/test.jl
 
 clean:
+	find test/unet -name log-0.txt -exec cat {} \;
 	rm -rf test/unet

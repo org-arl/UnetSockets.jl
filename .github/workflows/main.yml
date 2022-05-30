@@ -18,4 +18,4 @@ jobs:
       with:
         version: ${{ matrix.julia-version }}
     - name: Test
-      run: make test
+      run: make -k test clean
