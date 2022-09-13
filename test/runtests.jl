@@ -1,6 +1,7 @@
 using Test
 using Dates
 using UnetSockets
+using Sockets: getipaddrs, IPv4
 
 # start fjåge
 
@@ -11,10 +12,13 @@ sleep(5)
 # tests
 
 println("Starting tests...")
+ips = string.(filter(x -> x isa IPv4, getipaddrs()))
+println("IPs: $(ips)")
+ip = first(ips)
 try
 
   @testset "socket" begin
-    s = UnetSocket("localhost", 1101)
+    s = UnetSocket(ip, 1101)
     @test getlocaladdress(s) == 232
     @test host(s, "A") == 232
     @test host(s, "B") == 31
@@ -24,7 +28,7 @@ try
   end
 
   @testset "gateway" begin
-    s = UnetSocket("localhost", 1101)
+    s = UnetSocket(ip, 1101)
     gw = getgateway(s)
     @test gw isa Fjage.Gateway
     shell = agentforservice(gw, Services.SHELL)
@@ -34,7 +38,7 @@ try
   end
 
   @testset "agents" begin
-    s = UnetSocket("localhost", 1101)
+    s = UnetSocket(ip, 1101)
     node = agent(s, "node")
     @test node isa AgentID
     @test node.address == 232
@@ -47,7 +51,7 @@ try
   end
 
   @testset "bind/connect" begin
-    s = UnetSocket("localhost", 1101)
+    s = UnetSocket(ip, 1101)
     @test getlocalprotocol(s) == -1
     @test !isbound(s)
     @test bind(s, 42)
@@ -71,7 +75,7 @@ try
   end
 
   @testset "timeouts" begin
-    s = UnetSocket("localhost", 1101)
+    s = UnetSocket(ip, 1101)
     @test bind(s, 0)
     @test gettimeout(s) == -1
     settimeout(s, 1000)
@@ -90,7 +94,7 @@ try
   end
 
   @testset "cancel" begin
-    s = UnetSocket("localhost", 1101)
+    s = UnetSocket(ip, 1101)
     @test bind(s, 0)
     @test gettimeout(s) == -1
     t1 = now().instant
@@ -105,8 +109,8 @@ try
   end
 
   @testset "communication" begin
-    s1 = UnetSocket("localhost", 1101)
-    s2 = UnetSocket("localhost", 1102)
+    s1 = UnetSocket(ip, 1101)
+    s2 = UnetSocket(ip, 1102)
     @test bind(s2, Protocol.USER)
     settimeout(s2, 1000)
     @test !send(s1, [1,2,3])
