@@ -259,15 +259,15 @@ function Fjage.receive(sock::UnetSocket)
     sock.waiting = true
     ntf = receive(sock.gw, DatagramNtf, sock.timeout)
     sock.waiting = false
-    if ntf == nothing
-      return nothing
-    end
+    ntf === nothing && return nothing
     if isa(ntf, DatagramNtf)
       p = ntf.protocol
       if p == Protocol.DATA || p >= Protocol.USER
         if sock.localprotocol < 0 || sock.localprotocol == p
           return ntf
         end
+      elseif p == -1    # cancel called
+        return nothing
       end
     end
   end
@@ -277,7 +277,7 @@ end
 "Cancels an ongoing blocking receive()."
 function cancel(sock::UnetSocket)
   if sock.waiting
-    push!(sock.gw.queue, nothing)
+    send(sock.gw, DatagramNtf(recipient=AgentID(sock.gw), protocol=-1))
   end
 end
 

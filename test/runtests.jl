@@ -95,8 +95,8 @@ try
 
   @testset "cancel" begin
     s = UnetSocket(ip, 1101)
+    settimeout(s, 7000)
     @test bind(s, 0)
-    @test gettimeout(s) == -1
     t1 = now().instant
     @async begin
       sleep(2)
@@ -105,6 +105,7 @@ try
     @test receive(s) == nothing
     dt = now().instant - t1
     @test dt.value > 1500
+    @test dt.value < 5000
     close(s)
   end
 
