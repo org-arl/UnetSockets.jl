@@ -15,6 +15,8 @@ println("Starting tests...")
 ips = string.(filter(x -> x isa IPv4, getipaddrs()))
 println("IPs: $(ips)")
 ip = first(ips)
+run(`nc -w 1 $ip 1101`)   # to check on CI that connection is OK
+
 try
 
   @testset "socket" begin
