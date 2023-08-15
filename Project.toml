@@ -1,7 +1,7 @@
 name = "UnetSockets"
 uuid = "28ddc128-e2b5-11e9-14fc-f7f8bf0be62e"
 authors = ["Mandar Chitre <mandar@nus.edu.sg>"]
-version = "0.3.0"
+version = "0.4.0"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
