@@ -264,6 +264,7 @@ function Fjage.receive(sock::UnetSocket)
       p = ntf.protocol
       if p == Protocol.DATA || p >= Protocol.USER
         if sock.localprotocol < 0 || sock.localprotocol == p
+          ntf.data = reinterpret(UInt8, ntf.data)
           return ntf
         end
       elseif p == -1    # cancel called

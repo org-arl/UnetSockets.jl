@@ -142,6 +142,10 @@ try
     ntf = receive(s2)
     @test ntf isa DatagramNtf
     @test ntf.data == [1,2,3]
+    @test send(s1, [71,129,253], 31, Protocol.USER)
+    ntf = receive(s2)
+    @test ntf isa DatagramNtf
+    @test ntf.data == [71,129,253]
     close(s1)
     close(s2)
   end
