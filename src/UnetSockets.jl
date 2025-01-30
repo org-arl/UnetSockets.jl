@@ -12,6 +12,11 @@ export isclosed, getgateway, host, unbind, isbound, connect, disconnect, isconne
 export getlocalprotocol, getremoteaddress, getremoteprotocol, settimeout, gettimeout, cancel
 
 include("Messages.jl")
+include("Properties.jl")
+
+function __init__()
+  Fjage.registermessages()
+end
 
 "Well-known addresses."
 module Address
