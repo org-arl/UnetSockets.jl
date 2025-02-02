@@ -10,7 +10,7 @@ function Base.setproperty!(msg::BasebandSignal, p::Symbol, v::AbstractVecOrMat)
     msg.channels = size(v, 2)
     v = vec(transpose(v))
     if eltype(v) == Complex{Float64}
-      v = ComplexF32.(v)
+      v = convert(Array{ComplexF32}, v)
     elseif eltype(v) == Float64
       v = Float32.(v)
     end
