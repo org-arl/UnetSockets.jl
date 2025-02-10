@@ -186,15 +186,26 @@ export GetScheduleReq
 Fjage.@message "org.arl.unet.scheduler.GetScheduleReq" :REQUEST struct GetScheduleReq
 end
 
-export SaveStateReq
-Fjage.@message "org.arl.unet.state.SaveStateReq" :REQUEST struct SaveStateReq
-  stateName::Union{String,Nothing} = nothing
-  agentID::Union{String,Nothing} = nothing
-  ignore::Vector{String} = []
+export FrameToSignalReq
+Fjage.@message "org.arl.unet.phy.FrameToSignalReq" :REQUEST struct FrameToSignalReq
+  data::Union{Vector{UInt8},Nothing} = nothing
+  to::Int32 = 0
+  from::Int32 = 0
+  protocol::Int32 = 0
+  type::Int32 = 1
 end
 
-export ClearStateReq
-Fjage.@message "org.arl.unet.state.ClearStateReq" :REQUEST struct ClearStateReq
+export SignalToFrameReq
+Fjage.@message "org.arl.unet.phy.SignalToFrameReq" :REQUEST struct SignalToFrameReq <: BasebandSignal
+  rxStartTime::Union{Int64,Nothing} = nothing
+  location::Union{Vector{Float64},Nothing} = nothing
+  rssi::Float32 = NaN
+  preambleLength::Int32 = 0
+  signal::Union{Union{Vector{Complex{Float32}},Vector{Float32}},Nothing} = nothing
+  fc::Float32 = -1.0
+  fs::Float32 = -1.0
+  channels::Int32 = 1
+  preamble::Int32 = 0
 end
 
 export FecDecodeReq
