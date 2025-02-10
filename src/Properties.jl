@@ -1,7 +1,7 @@
 # special handling of message properties
 
 function Base.getproperty(msg::BasebandSignal, p::Symbol)
-  p === :signal && return transpose(reshape(getfield(msg, :signal), msg.channels, :))
+  p === :signal && return transpose(reshape(getfield(msg, :signal), Int64(msg.channels), :))
   getfield(msg, p)
 end
 
