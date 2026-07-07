@@ -1,2 +1,4 @@
 test/unet
+test/logs
+test/unet.pid
 Manifest.toml
