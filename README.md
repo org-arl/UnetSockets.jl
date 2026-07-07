@@ -6,7 +6,7 @@ _[ UnetStack 7 ]_
 Julia UnetSocket API to connect to [UnetStack](https://unetstack.net).
 
 > [!IMPORTANT]
-> Version 1.0 of this package requires **UnetStack 7**. It is not compatible with
+> Version 0.6 onwards of this package requires **UnetStack 7**. It is not compatible with
 > UnetStack 3.x: if you need to talk to an older modem or simulator, pin the previous
 > release with `pkg> add UnetSockets@0.5`.
 
