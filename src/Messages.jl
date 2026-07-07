@@ -1,18 +1,23 @@
-# This file is largely generated automatically from the Unet message definitions.
+# This file is largely generated automatically from the Unet message definitions
+# (see unet/unet-julia/xmsg.sh, which produces unet-julia/Unet/src/messages.jl).
 # However, there is some customization (see comments marked as "manual editing"),
 # and so updating it will involve a careful merge.
 
-abstract type RouteInfo <: Fjage.Message end
-abstract type DatagramReq <: Fjage.Message end
-abstract type BasebandSignal <: Fjage.Message end
+import Fjage
+
+abstract type UnetMessage <: Fjage.Message end
+
+abstract type RouteInfo <: UnetMessage end
+abstract type DatagramReq <: UnetMessage end
+abstract type BasebandSignal <: UnetMessage end
 abstract type TxFrameReq <: DatagramReq end
 abstract type RemoteMessageReq <: DatagramReq end
-abstract type AgentLifecycleNtf <: Fjage.Message end
-abstract type DatagramNtf <: Fjage.Message end
+abstract type AgentLifecycleNtf <: UnetMessage end
+abstract type DatagramNtf <: UnetMessage end
 abstract type RxFrameNtf <: DatagramNtf end
-abstract type DatagramTransmissionNtf <: Fjage.Message end
-abstract type DatagramFailureNtf <: Fjage.Message end
-abstract type DatagramDeliveryNtf <: Fjage.Message end
+abstract type DatagramTransmissionNtf <: UnetMessage end
+abstract type DatagramFailureNtf <: UnetMessage end
+abstract type DatagramDeliveryNtf <: UnetMessage end
 abstract type RemoteMessageNtf <: DatagramNtf end
 
 export RouteRsp
@@ -29,42 +34,45 @@ Fjage.@message "org.arl.unet.net.RouteRsp" :INFORM struct RouteRsp <: RouteInfo
   RTU::Union{Int32,Nothing} = nothing
   metric::Union{Float32,Nothing} = nothing
   enabled::Union{Bool,Nothing} = nothing
+  auto::Union{Bool,Nothing} = nothing
+  poll::Union{Float32,Nothing} = nothing
 end
 
 export CapabilityListRsp
-Fjage.@message "org.arl.unet.CapabilityListRsp" :INFORM struct CapabilityListRsp
+Fjage.@message "org.arl.unet.CapabilityListRsp" :INFORM struct CapabilityListRsp <: UnetMessage
   capSet::Vector{String} = []
 end
 
 export ScheduledTaskRsp
-Fjage.@message "org.arl.unet.scheduler.ScheduledTaskRsp" :INFORM struct ScheduledTaskRsp
+Fjage.@message "org.arl.unet.scheduler.ScheduledTaskRsp" :INFORM struct ScheduledTaskRsp <: UnetMessage
   tasks::Vector{Any} = []
 end
 
 export RefuseRsp
-Fjage.@message "org.arl.unet.RefuseRsp" :REFUSE struct RefuseRsp
+Fjage.@message "org.arl.unet.RefuseRsp" :REFUSE struct RefuseRsp <: UnetMessage
   reason::Union{String,Nothing} = nothing
 end
 
 export ReservationRsp
-Fjage.@message "org.arl.unet.mac.ReservationRsp" :AGREE struct ReservationRsp
+Fjage.@message "org.arl.unet.mac.ReservationRsp" :AGREE struct ReservationRsp <: UnetMessage
   estimatedStartTime::Union{Int64,Nothing} = nothing
 end
 
 export AddressResolutionRsp
-Fjage.@message "org.arl.unet.addr.AddressResolutionRsp" :INFORM struct AddressResolutionRsp
+Fjage.@message "org.arl.unet.addr.AddressResolutionRsp" :INFORM struct AddressResolutionRsp <: UnetMessage
   address::Int32 = -1
   name::Union{String,Nothing} = nothing
 end
 
 export AddressAllocRsp
-Fjage.@message "org.arl.unet.addr.AddressAllocRsp" :INFORM struct AddressAllocRsp
+Fjage.@message "org.arl.unet.addr.AddressAllocRsp" :INFORM struct AddressAllocRsp <: UnetMessage
   address::Int32 = -1
 end
 
 export GetRouteReq
-Fjage.@message "org.arl.unet.net.GetRouteReq" :REQUEST struct GetRouteReq
+Fjage.@message "org.arl.unet.net.GetRouteReq" :REQUEST struct GetRouteReq <: UnetMessage
   to::Int32 = -1
+  uuid::Union{String,Nothing} = nothing
   all::Bool = false
 end
 
@@ -84,7 +92,7 @@ Fjage.@message "org.arl.unet.net.DatagramTraceReq" :REQUEST struct DatagramTrace
 end
 
 export RouteDiscoveryReq
-Fjage.@message "org.arl.unet.net.RouteDiscoveryReq" :REQUEST struct RouteDiscoveryReq
+Fjage.@message "org.arl.unet.net.RouteDiscoveryReq" :REQUEST struct RouteDiscoveryReq <: UnetMessage
   to::Int32 = -1
   maxHops::Int32 = 3
   count::Int32 = 3
@@ -92,7 +100,7 @@ Fjage.@message "org.arl.unet.net.RouteDiscoveryReq" :REQUEST struct RouteDiscove
 end
 
 export RouteTraceReq
-Fjage.@message "org.arl.unet.net.RouteTraceReq" :REQUEST struct RouteTraceReq
+Fjage.@message "org.arl.unet.net.RouteTraceReq" :REQUEST struct RouteTraceReq <: UnetMessage
   to::Int32 = -1
 end
 
@@ -110,10 +118,12 @@ Fjage.@message "org.arl.unet.net.EditRouteReq" :REQUEST struct EditRouteReq <: R
   RTU::Union{Int32,Nothing} = nothing
   metric::Union{Float32,Nothing} = nothing
   enabled::Union{Bool,Nothing} = nothing
+  auto::Union{Bool,Nothing} = nothing
+  poll::Union{Float32,Nothing} = nothing
 end
 
 export GetPreambleSignalReq
-Fjage.@message "org.arl.unet.bb.GetPreambleSignalReq" :REQUEST struct GetPreambleSignalReq
+Fjage.@message "org.arl.unet.bb.GetPreambleSignalReq" :REQUEST struct GetPreambleSignalReq <: UnetMessage
   preamble::Int32 = -1
 end
 
@@ -143,22 +153,22 @@ Fjage.@message "org.arl.unet.bb.TxBasebandSignalReq" :REQUEST struct TxBasebandS
 end
 
 export RecordBasebandSignalReq
-Fjage.@message "org.arl.unet.bb.RecordBasebandSignalReq" :REQUEST struct RecordBasebandSignalReq
+Fjage.@message "org.arl.unet.bb.RecordBasebandSignalReq" :REQUEST struct RecordBasebandSignalReq <: UnetMessage
   recStartTime::Union{Int64,Nothing} = nothing
   recLength::Union{Int32,Nothing} = nothing
 end
 
 export CapabilityReq
-Fjage.@message "org.arl.unet.CapabilityReq" :QUERY_IF struct CapabilityReq
+Fjage.@message "org.arl.unet.CapabilityReq" :QUERY_IF struct CapabilityReq <: UnetMessage
   cap::Union{String,Nothing} = nothing
 end
 
 export SleepReq
-Fjage.@message "org.arl.unet.scheduler.SleepReq" :REQUEST struct SleepReq
+Fjage.@message "org.arl.unet.scheduler.SleepReq" :REQUEST struct SleepReq <: UnetMessage
 end
 
 export AddScheduledTaskReq
-Fjage.@message "org.arl.unet.scheduler.AddScheduledTaskReq" :REQUEST struct AddScheduledTaskReq
+Fjage.@message "org.arl.unet.scheduler.AddScheduledTaskReq" :REQUEST struct AddScheduledTaskReq <: UnetMessage
   scheduler::Union{String,Nothing} = nothing
   minute::String = "*"
   hour::String = "*"
@@ -173,45 +183,41 @@ Fjage.@message "org.arl.unet.scheduler.AddScheduledTaskReq" :REQUEST struct AddS
 end
 
 export RemoveScheduledTaskReq
-Fjage.@message "org.arl.unet.scheduler.RemoveScheduledTaskReq" :REQUEST struct RemoveScheduledTaskReq
+Fjage.@message "org.arl.unet.scheduler.RemoveScheduledTaskReq" :REQUEST struct RemoveScheduledTaskReq <: UnetMessage
   id::Union{String,Nothing} = nothing
 end
 
 export StayAwakeReq
-Fjage.@message "org.arl.unet.scheduler.StayAwakeReq" :REQUEST struct StayAwakeReq
+Fjage.@message "org.arl.unet.scheduler.StayAwakeReq" :REQUEST struct StayAwakeReq <: UnetMessage
   seconds::Int32 = 0
 end
 
 export GetScheduleReq
-Fjage.@message "org.arl.unet.scheduler.GetScheduleReq" :REQUEST struct GetScheduleReq
+Fjage.@message "org.arl.unet.scheduler.GetScheduleReq" :REQUEST struct GetScheduleReq <: UnetMessage
+end
+
+export SpeedTestReq
+Fjage.@message "org.arl.unet.utils.SpeedTestReq" :REQUEST struct SpeedTestReq <: UnetMessage
+  to::Int32 = -1
+  count::Int32 = 0
 end
 
 export FrameToSignalReq
-Fjage.@message "org.arl.unet.phy.FrameToSignalReq" :REQUEST struct FrameToSignalReq
+Fjage.@message "org.arl.unet.phy.FrameToSignalReq" :REQUEST struct FrameToSignalReq <: UnetMessage
   data::Union{Vector{UInt8},Nothing} = nothing
+  bytes::Union{Vector{UInt8},Nothing} = nothing
   to::Int32 = 0
   from::Int32 = 0
   protocol::Int32 = 0
   type::Int32 = 1
 end
 
-export SignalToFrameReq
-Fjage.@message "org.arl.unet.phy.SignalToFrameReq" :REQUEST struct SignalToFrameReq <: BasebandSignal
+export FecDecodeReq
+Fjage.@message "org.arl.unet.phy.FecDecodeReq" :REQUEST struct FecDecodeReq <: UnetMessage
+  type::Int32 = 2
   rxStartTime::Union{Int64,Nothing} = nothing
   location::Union{Vector{Float64},Nothing} = nothing
   rssi::Float32 = NaN
-  preambleLength::Int32 = 0
-  signal::Union{Union{Vector{Complex{Float32}},Vector{Float32}},Nothing} = nothing
-  fc::Float32 = -1.0
-  fs::Float32 = -1.0
-  channels::Int32 = 1
-  preamble::Int32 = 0
-end
-
-export FecDecodeReq
-Fjage.@message "org.arl.unet.phy.FecDecodeReq" :REQUEST struct FecDecodeReq
-  type::Int32 = 2
-  rxStartTime::Union{Int64,Nothing} = nothing
   metrics::Union{Vector{Float32},Nothing} = nothing
 end
 
@@ -252,6 +258,19 @@ Fjage.@message "org.arl.unet.phy.TxSWiG1FrameReq" :REQUEST struct TxSWiG1FrameRe
   shortcircuit::Bool = true
   route::Union{String,Nothing} = nothing
   progress::Bool = false
+end
+
+export SignalToFrameReq
+Fjage.@message "org.arl.unet.phy.SignalToFrameReq" :REQUEST struct SignalToFrameReq <: BasebandSignal
+  rxStartTime::Union{Int64,Nothing} = nothing
+  location::Union{Vector{Float64},Nothing} = nothing
+  rssi::Float32 = NaN
+  preambleLength::Int32 = 0
+  signal::Union{Union{Vector{Complex{Float32}},Vector{Float32}},Nothing} = nothing
+  fc::Float32 = -1.0
+  fs::Float32 = -1.0
+  channels::Int32 = 1
+  preamble::Int32 = 0
 end
 
 export TxJanusFrameReq
@@ -297,13 +316,13 @@ Fjage.@message "org.arl.unet.DatagramReq" :REQUEST struct DatagramReq <: Datagra
 end
 
 export ReservationAcceptReq
-Fjage.@message "org.arl.unet.mac.ReservationAcceptReq" :REQUEST struct ReservationAcceptReq
+Fjage.@message "org.arl.unet.mac.ReservationAcceptReq" :REQUEST struct ReservationAcceptReq <: UnetMessage
   id::Union{String,Nothing} = nothing
   payload::Union{Vector{UInt8},Nothing} = nothing
 end
 
 export ReservationReq
-Fjage.@message "org.arl.unet.mac.ReservationReq" :REQUEST struct ReservationReq
+Fjage.@message "org.arl.unet.mac.ReservationReq" :REQUEST struct ReservationReq <: UnetMessage
   to::Int32 = 0
   duration::Float32 = 0.0
   payload::Union{Vector{UInt8},Nothing} = nothing
@@ -314,23 +333,23 @@ Fjage.@message "org.arl.unet.mac.ReservationReq" :REQUEST struct ReservationReq
 end
 
 export TxAckReq
-Fjage.@message "org.arl.unet.mac.TxAckReq" :REQUEST struct TxAckReq
+Fjage.@message "org.arl.unet.mac.TxAckReq" :REQUEST struct TxAckReq <: UnetMessage
   requestID::Union{String,Nothing} = nothing
   payload::Union{Vector{UInt8},Nothing} = nothing
 end
 
 export ReservationCancelReq
-Fjage.@message "org.arl.unet.mac.ReservationCancelReq" :REQUEST struct ReservationCancelReq
+Fjage.@message "org.arl.unet.mac.ReservationCancelReq" :REQUEST struct ReservationCancelReq <: UnetMessage
   id::Union{String,Nothing} = nothing
 end
 
 export LinkTuneReq
-Fjage.@message "org.arl.unet.link.LinkTuneReq" :REQUEST struct LinkTuneReq
+Fjage.@message "org.arl.unet.link.LinkTuneReq" :REQUEST struct LinkTuneReq <: UnetMessage
   to::Int32 = -1
 end
 
 export LinkSchemeReq
-Fjage.@message "org.arl.unet.link.LinkSchemeReq" :REQUEST struct LinkSchemeReq
+Fjage.@message "org.arl.unet.link.LinkSchemeReq" :REQUEST struct LinkSchemeReq <: UnetMessage
   to::Int32 = -1
   schemeCode::Union{String,Nothing} = nothing
   powerLevel::Union{Int32,Nothing} = nothing
@@ -338,34 +357,40 @@ Fjage.@message "org.arl.unet.link.LinkSchemeReq" :REQUEST struct LinkSchemeReq
 end
 
 export CancelReq
-Fjage.@message "org.arl.unet.CancelReq" :REQUEST struct CancelReq
+Fjage.@message "org.arl.unet.CancelReq" :REQUEST struct CancelReq <: UnetMessage
   id::Union{String,Nothing} = nothing
 end
 
 export ClearReq
-Fjage.@message "org.arl.unet.ClearReq" :REQUEST struct ClearReq
+Fjage.@message "org.arl.unet.ClearReq" :REQUEST struct ClearReq <: UnetMessage
+end
+
+export PMMSleepReq
+Fjage.@message "org.arl.unet.device.PMMSleepReq" :REQUEST struct PMMSleepReq <: UnetMessage
+  wakeOnAcoustic::Bool = false
+  wakeOnGPIO::Bool = false
 end
 
 export AddressAllocReq
-Fjage.@message "org.arl.unet.addr.AddressAllocReq" :REQUEST struct AddressAllocReq
+Fjage.@message "org.arl.unet.addr.AddressAllocReq" :REQUEST struct AddressAllocReq <: UnetMessage
   name::Union{String,Nothing} = nothing
   addressSize::Union{Int32,Nothing} = nothing
 end
 
 export AddressResolutionReq
-Fjage.@message "org.arl.unet.addr.AddressResolutionReq" :REQUEST struct AddressResolutionReq
+Fjage.@message "org.arl.unet.addr.AddressResolutionReq" :REQUEST struct AddressResolutionReq <: UnetMessage
   name::Union{String,Nothing} = nothing
 end
 
 export RangeReq
-Fjage.@message "org.arl.unet.localization.RangeReq" :REQUEST struct RangeReq
+Fjage.@message "org.arl.unet.localization.RangeReq" :REQUEST struct RangeReq <: UnetMessage
   to::Int32 = -1
   requestLocation::Bool = false
   data::Union{Vector{UInt8},Nothing} = nothing
 end
 
 export RespondReq
-Fjage.@message "org.arl.unet.localization.RespondReq" :REQUEST struct RespondReq
+Fjage.@message "org.arl.unet.localization.RespondReq" :REQUEST struct RespondReq <: UnetMessage
   to::Int32 = 0
   type::Int32 = 0
   rxStartTime::Int64 = 0
@@ -373,7 +398,7 @@ Fjage.@message "org.arl.unet.localization.RespondReq" :REQUEST struct RespondReq
 end
 
 export BeaconReq
-Fjage.@message "org.arl.unet.localization.BeaconReq" :REQUEST struct BeaconReq
+Fjage.@message "org.arl.unet.localization.BeaconReq" :REQUEST struct BeaconReq <: UnetMessage
   type::Int32 = 0
   to::Int32 = 0
   txLocation::Bool = false
@@ -381,7 +406,7 @@ Fjage.@message "org.arl.unet.localization.BeaconReq" :REQUEST struct BeaconReq
 end
 
 export RemoteFilePutReq
-Fjage.@message "org.arl.unet.remote.RemoteFilePutReq" :REQUEST struct RemoteFilePutReq
+Fjage.@message "org.arl.unet.remote.RemoteFilePutReq" :REQUEST struct RemoteFilePutReq <: UnetMessage
   to::Int32 = -1
   data::Union{Vector{UInt8},Nothing} = nothing
   filename::Union{String,Nothing} = nothing
@@ -393,7 +418,7 @@ Fjage.@message "org.arl.unet.remote.RemoteFilePutReq" :REQUEST struct RemoteFile
 end
 
 export RemoteFileGetReq
-Fjage.@message "org.arl.unet.remote.RemoteFileGetReq" :REQUEST struct RemoteFileGetReq
+Fjage.@message "org.arl.unet.remote.RemoteFileGetReq" :REQUEST struct RemoteFileGetReq <: UnetMessage
   to::Int32 = -1
   filename::Union{String,Nothing} = nothing
   localFilename::Union{String,Nothing} = nothing
@@ -468,14 +493,14 @@ Fjage.@message "org.arl.unet.DatagramDeliveryNtf" :INFORM struct DatagramDeliver
 end
 
 export ParamChangeNtf
-Fjage.@message "org.arl.unet.ParamChangeNtf" :INFORM struct ParamChangeNtf
+Fjage.@message "org.arl.unet.ParamChangeNtf" :INFORM struct ParamChangeNtf <: UnetMessage
   paramValues::Dict{String,Any} = Dict{String,Any}()
   readonly::Vector{String} = []
   index::Int32 = -1
 end
 
 export RouteDiscoveryNtf
-Fjage.@message "org.arl.unet.net.RouteDiscoveryNtf" :INFORM struct RouteDiscoveryNtf
+Fjage.@message "org.arl.unet.net.RouteDiscoveryNtf" :INFORM struct RouteDiscoveryNtf <: UnetMessage
   to::Int32 = 0
   nextHop::Int32 = -1
   link::Union{String,Nothing} = nothing
@@ -498,16 +523,19 @@ Fjage.@message "org.arl.unet.net.RouteChangeNtf" :INFORM struct RouteChangeNtf <
   RTU::Union{Int32,Nothing} = nothing
   metric::Union{Float32,Nothing} = nothing
   enabled::Union{Bool,Nothing} = nothing
+  auto::Union{Bool,Nothing} = nothing
+  poll::Union{Float32,Nothing} = nothing
 end
 
 export RouteTraceNtf
-Fjage.@message "org.arl.unet.net.RouteTraceNtf" :INFORM struct RouteTraceNtf
+Fjage.@message "org.arl.unet.net.RouteTraceNtf" :INFORM struct RouteTraceNtf <: UnetMessage
   to::Int32 = -1
   trace::Union{Vector{Int32},Nothing} = nothing
 end
 
 export DetectionNtf
-Fjage.@message "org.arl.unet.bb.DetectionNtf" :INFORM struct DetectionNtf
+Fjage.@message "org.arl.unet.bb.DetectionNtf" :INFORM struct DetectionNtf <: UnetMessage
+  captureStartTime::Union{Int64,Nothing} = nothing
   rxStartTime::Union{Int64,Nothing} = nothing
   rxDuration::Union{Int32,Nothing} = nothing
   preamble::Int32 = -1
@@ -518,7 +546,7 @@ export RxBasebandSignalNtf
 Fjage.@message "org.arl.unet.bb.RxBasebandSignalNtf" :INFORM struct RxBasebandSignalNtf <: BasebandSignal
   rxStartTime::Union{Int64,Nothing} = nothing
   location::Union{Vector{Float64},Nothing} = nothing
-  rssi::Union{Float32,Nothing} = nothing
+  rssi::Float32 = NaN
   preambleLength::Int32 = 0
   signal::Union{Union{Vector{Complex{Float32}},Vector{Float32}},Nothing} = nothing
   fc::Float32 = -1.0
@@ -528,21 +556,21 @@ Fjage.@message "org.arl.unet.bb.RxBasebandSignalNtf" :INFORM struct RxBasebandSi
 end
 
 export TxEndNtf
-Fjage.@message "org.arl.unet.bb.TxEndNtf" :INFORM struct TxEndNtf
+Fjage.@message "org.arl.unet.bb.TxEndNtf" :INFORM struct TxEndNtf <: UnetMessage
   txStartTime::Union{Int64,Nothing} = nothing
   preamble::Int32 = -1
   location::Union{Vector{Float64},Nothing} = nothing
 end
 
 export TxStartNtf
-Fjage.@message "org.arl.unet.bb.TxStartNtf" :INFORM struct TxStartNtf
+Fjage.@message "org.arl.unet.bb.TxStartNtf" :INFORM struct TxStartNtf <: UnetMessage
   txStartTime::Union{Int64,Nothing} = nothing
   txDuration::Union{Int32,Nothing} = nothing
   preamble::Int32 = -1
 end
 
 export ProgressNtf
-Fjage.@message "org.arl.unet.ProgressNtf" :INFORM struct ProgressNtf
+Fjage.@message "org.arl.unet.ProgressNtf" :INFORM struct ProgressNtf <: UnetMessage
   peer::Int32 = 0
   transferred::Int64 = 0
   total::Int64 = 0
@@ -570,22 +598,23 @@ Fjage.@message "org.arl.unet.AgentLifecycleNtf" :INFORM struct AgentLifecycleNtf
 end
 
 export WakeFromSleepNtf
-Fjage.@message "org.arl.unet.scheduler.WakeFromSleepNtf" :INFORM struct WakeFromSleepNtf
+Fjage.@message "org.arl.unet.scheduler.WakeFromSleepNtf" :INFORM struct WakeFromSleepNtf <: UnetMessage
 end
 
 export AboutToSleepNtf
-Fjage.@message "org.arl.unet.scheduler.AboutToSleepNtf" :INFORM struct AboutToSleepNtf
+Fjage.@message "org.arl.unet.scheduler.AboutToSleepNtf" :INFORM struct AboutToSleepNtf <: UnetMessage
   scheduledNextWakeupTime::Int64 = 0
 end
 
 export BadFrameNtf
-Fjage.@message "org.arl.unet.phy.BadFrameNtf" :INFORM struct BadFrameNtf
-  rxStartTime::Int64 = 0
+Fjage.@message "org.arl.unet.phy.BadFrameNtf" :INFORM struct BadFrameNtf <: UnetMessage
+  rxStartTime::Union{Int64,Nothing} = nothing
   location::Union{Vector{Float64},Nothing} = nothing
-  data::Union{Vector{UInt8},Nothing} = nothing
+  bytes::Union{Vector{UInt8},Nothing} = nothing
   metrics::Union{Vector{Float32},Nothing} = nothing
   type::Int32 = -1
   rssi::Float32 = NaN
+  schemeCode::Union{String,Nothing} = nothing
 end
 
 export RxFrameNtf
@@ -599,6 +628,8 @@ Fjage.@message "org.arl.unet.phy.RxFrameNtf" :INFORM struct RxFrameNtf <: RxFram
   rssi::Float32 = NaN
   cfo::Float32 = NaN
   metrics::Union{Vector{Float32},Nothing} = nothing
+  schemeCode::Union{String,Nothing} = nothing
+  bytes::Union{Vector{UInt8},Nothing} = nothing
   data::Union{Vector{UInt8},Nothing} = nothing
   from::Int32 = 0
   to::Int32 = 0
@@ -608,10 +639,11 @@ Fjage.@message "org.arl.unet.phy.RxFrameNtf" :INFORM struct RxFrameNtf <: RxFram
 end
 
 export TxFrameStartNtf
-Fjage.@message "org.arl.unet.phy.TxFrameStartNtf" :INFORM struct TxFrameStartNtf
+Fjage.@message "org.arl.unet.phy.TxFrameStartNtf" :INFORM struct TxFrameStartNtf <: UnetMessage
   txStartTime::Union{Int64,Nothing} = nothing
   txDuration::Union{Int32,Nothing} = nothing
   type::Int32 = -1
+  to::Int32 = -1
 end
 
 export RxSWiG1FrameNtf
@@ -626,19 +658,14 @@ Fjage.@message "org.arl.unet.phy.RxSWiG1FrameNtf" :INFORM struct RxSWiG1FrameNtf
   rssi::Float32 = NaN
   cfo::Float32 = NaN
   metrics::Union{Vector{Float32},Nothing} = nothing
+  schemeCode::Union{String,Nothing} = nothing
+  bytes::Union{Vector{UInt8},Nothing} = nothing
   data::Union{Vector{UInt8},Nothing} = nothing
   from::Int32 = 0
   to::Int32 = 0
   protocol::Int32 = 0
   ttl::Float32 = NaN
   priority::Symbol = :NORMAL
-end
-
-export CollisionNtf
-Fjage.@message "org.arl.unet.phy.CollisionNtf" :INFORM struct CollisionNtf
-  type::Int32 = -1
-  rxStartTime::Union{Int64,Nothing} = nothing
-  detector::Float32 = 0.0
 end
 
 export RxJanusFrameNtf
@@ -660,6 +687,8 @@ Fjage.@message "org.arl.unet.phy.RxJanusFrameNtf" :INFORM struct RxJanusFrameNtf
   rssi::Float32 = NaN
   cfo::Float32 = NaN
   metrics::Union{Vector{Float32},Nothing} = nothing
+  schemeCode::Union{String,Nothing} = nothing
+  bytes::Union{Vector{UInt8},Nothing} = nothing
   data::Union{Vector{UInt8},Nothing} = nothing
   from::Int32 = 0
   to::Int32 = 0
@@ -673,10 +702,11 @@ Fjage.@message "org.arl.unet.phy.TxFrameNtf" :INFORM struct TxFrameNtf <: Datagr
   txStartTime::Union{Int64,Nothing} = nothing
   type::Int32 = -1
   location::Union{Vector{Float64},Nothing} = nothing
+  to::Int32 = -1
 end
 
 export RxFrameStartNtf
-Fjage.@message "org.arl.unet.phy.RxFrameStartNtf" :INFORM struct RxFrameStartNtf
+Fjage.@message "org.arl.unet.phy.RxFrameStartNtf" :INFORM struct RxFrameStartNtf <: UnetMessage
   rxStartTime::Union{Int64,Nothing} = nothing
   rxDuration::Union{Int32,Nothing} = nothing
   type::Int32 = -1
@@ -684,7 +714,7 @@ Fjage.@message "org.arl.unet.phy.RxFrameStartNtf" :INFORM struct RxFrameStartNtf
 end
 
 export ReservationStatusNtf
-Fjage.@message "org.arl.unet.mac.ReservationStatusNtf" :INFORM struct ReservationStatusNtf
+Fjage.@message "org.arl.unet.mac.ReservationStatusNtf" :INFORM struct ReservationStatusNtf <: UnetMessage
   to::Int32 = 0
   from::Int32 = -1
   status::Union{Symbol,Nothing} = nothing
@@ -692,38 +722,38 @@ Fjage.@message "org.arl.unet.mac.ReservationStatusNtf" :INFORM struct Reservatio
 end
 
 export ReservationNtf
-Fjage.@message "org.arl.unet.mac.ReservationNtf" :INFORM struct ReservationNtf
+Fjage.@message "org.arl.unet.mac.ReservationNtf" :INFORM struct ReservationNtf <: UnetMessage
   id::Union{String,Nothing} = nothing
   duration::Float32 = 0.0
   startTime::Union{Int64,Nothing} = nothing
 end
 
 export LinkSchemeNtf
-Fjage.@message "org.arl.unet.link.LinkSchemeNtf" :INFORM struct LinkSchemeNtf
+Fjage.@message "org.arl.unet.link.LinkSchemeNtf" :INFORM struct LinkSchemeNtf <: UnetMessage
   to::Int32 = 0
   schemeCode::Union{String,Nothing} = nothing
   powerLevel::Union{Int32,Nothing} = nothing
 end
 
 export LinkPerformanceNtf
-Fjage.@message "org.arl.unet.link.LinkPerformanceNtf" :INFORM struct LinkPerformanceNtf
+Fjage.@message "org.arl.unet.link.LinkPerformanceNtf" :INFORM struct LinkPerformanceNtf <: UnetMessage
   to::Int32 = 0
   schemeCode::Union{String,Nothing} = nothing
   powerLevel::Union{Int32,Nothing} = nothing
   bits::Int32 = 0
-  errors::Vector{Int32} = []
-  rssi::Vector{Float32} = []
+  errors::Union{Vector{Int32},Nothing} = nothing
+  rssi::Union{Vector{Float32},Nothing} = nothing
 end
 
 export LinkStatusNtf
-Fjage.@message "org.arl.unet.link.LinkStatusNtf" :INFORM struct LinkStatusNtf
+Fjage.@message "org.arl.unet.link.LinkStatusNtf" :INFORM struct LinkStatusNtf <: UnetMessage
   to::Int32 = 0
   up::Union{Bool,Nothing} = nothing
   quality::Union{Float32,Nothing} = nothing
 end
 
 export TestReportNtf
-Fjage.@message "org.arl.unet.TestReportNtf" :INFORM struct TestReportNtf
+Fjage.@message "org.arl.unet.TestReportNtf" :INFORM struct TestReportNtf <: UnetMessage
   report::Union{Vector{String},Nothing} = nothing
   pass::Bool = true
 end
@@ -741,15 +771,16 @@ end
 
 export DatagramTransmissionNtf
 Fjage.@message "org.arl.unet.DatagramTransmissionNtf" :INFORM struct DatagramTransmissionNtf <: DatagramTransmissionNtf
+  to::Int32 = -1
 end
 
 export FailureNtf
-Fjage.@message "org.arl.unet.FailureNtf" :FAILURE struct FailureNtf
+Fjage.@message "org.arl.unet.FailureNtf" :FAILURE struct FailureNtf <: UnetMessage
   reason::Union{String,Nothing} = nothing
 end
 
 export InterrogationNtf
-Fjage.@message "org.arl.unet.localization.InterrogationNtf" :INFORM struct InterrogationNtf
+Fjage.@message "org.arl.unet.localization.InterrogationNtf" :INFORM struct InterrogationNtf <: UnetMessage
   from::Int32 = 0
   to::Int32 = 0
   type::Int32 = 0
@@ -759,7 +790,7 @@ Fjage.@message "org.arl.unet.localization.InterrogationNtf" :INFORM struct Inter
 end
 
 export BearingNtf
-Fjage.@message "org.arl.unet.localization.BearingNtf" :INFORM struct BearingNtf
+Fjage.@message "org.arl.unet.localization.BearingNtf" :INFORM struct BearingNtf <: UnetMessage
   azimuth::Union{Float64,Nothing} = nothing
   elevation::Union{Float64,Nothing} = nothing
   worldAzimuth::Union{Float64,Nothing} = nothing
@@ -772,7 +803,7 @@ Fjage.@message "org.arl.unet.localization.BearingNtf" :INFORM struct BearingNtf
 end
 
 export PeerLocationNtf
-Fjage.@message "org.arl.unet.localization.PeerLocationNtf" :INFORM struct PeerLocationNtf
+Fjage.@message "org.arl.unet.localization.PeerLocationNtf" :INFORM struct PeerLocationNtf <: UnetMessage
   peer::Int32 = -1
   peerLocation::Union{Vector{Float64},Nothing} = nothing
   rxStartTime::Union{Int64,Nothing} = nothing
@@ -780,7 +811,7 @@ Fjage.@message "org.arl.unet.localization.PeerLocationNtf" :INFORM struct PeerLo
 end
 
 export RangeNtf
-Fjage.@message "org.arl.unet.localization.RangeNtf" :INFORM struct RangeNtf
+Fjage.@message "org.arl.unet.localization.RangeNtf" :INFORM struct RangeNtf <: UnetMessage
   from::Int32 = 0
   to::Int32 = 0
   rxStartTime::Union{Int64,Nothing} = nothing
@@ -802,8 +833,8 @@ Fjage.@message "org.arl.unet.DatagramNtf" :INFORM struct DatagramNtf <: Datagram
 end
 
 export SystemNtf
-Fjage.@message "org.arl.unet.SystemNtf" :INFORM struct SystemNtf
-  level::Symbol = :WARNING
+Fjage.@message "org.arl.unet.SystemNtf" :INFORM struct SystemNtf <: UnetMessage
+  level::String = "WARNING"
   description::Union{String,Nothing} = nothing
   details::Union{Any,Nothing} = nothing
 end
@@ -841,7 +872,7 @@ Fjage.@message "org.arl.unet.remote.RemoteTextNtf" :INFORM struct RemoteTextNtf 
 end
 
 export RemoteFileNtf
-Fjage.@message "org.arl.unet.remote.RemoteFileNtf" :INFORM struct RemoteFileNtf
+Fjage.@message "org.arl.unet.remote.RemoteFileNtf" :INFORM struct RemoteFileNtf <: UnetMessage
   from::Int32 = -1
   data::Union{Vector{UInt8},Nothing} = nothing
   filename::Union{String,Nothing} = nothing
