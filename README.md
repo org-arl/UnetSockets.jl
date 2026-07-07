@@ -82,8 +82,8 @@ sock.remoteaddress          # address of node B
 sock.remoteprotocol         # 32
 disconnect(sock)            # clear the default destination
 ```
-`host(sock, name)` resolves a node name to its address, and `getlocaladdress(sock)`
-returns the address of the local node.
+`host(sock, name)` resolves a node name to its address, and `sock.localaddress` gives
+the address of the local node.
 
 ## Sending datagrams
 
@@ -102,9 +102,9 @@ highest-level datagram service provider available (remote, then transport, routi
 link, physical), so an application normally does not need to care whether the data goes
 single-hop or multi-hop. To override the choice:
 ```julia
-getserviceprovider(sock)             # AgentID of the automatically chosen provider
-setserviceprovider(sock, agent(sock, "phy"))   # force transmission through an agent
-setserviceprovider(sock, nothing)    # revert to automatic selection
+sock.serviceprovider                       # AgentID of the automatically chosen provider
+sock.serviceprovider = agent(sock, "phy")  # force transmission through an agent
+sock.serviceprovider = nothing             # revert to automatic selection
 ```
 
 ### Send modes
@@ -126,22 +126,24 @@ be acknowledged (or to fail) before returning.
 ### Socket attributes
 
 Socket attributes are read and set as properties. `timeout` controls datagram
-reception; the others carry quality-of-service and metadata attributes that mirror
-those on a `DatagramReq`, and apply to all subsequent `send` calls:
+reception and `serviceprovider` selects the agent used for sending; the others carry
+quality-of-service and metadata attributes that mirror those on a `DatagramReq`, and
+apply to all subsequent `send` calls:
 
-| Property          | Type                  | Default         | Description                                    |
-|:------------------|:----------------------|:----------------|:-----------------------------------------------|
-| `timeout`         | `Int`                 | `BLOCKING`      | receive timeout in milliseconds                |
-| `sendmode`        | `Int`                 | `SEMI_BLOCKING` | send mode (see above)                          |
-| `ttl`             | `Float32`             | `NaN32` (unset) | time-to-live in seconds                        |
-| `priority`        | `Symbol`              | `:NORMAL`       | one of the `Priority.*` constants              |
-| `robustness`      | `Symbol`              | `:NORMAL`       | one of the `Robustness.*` constants            |
-| `reliability`     | `Bool` or `nothing`   | `nothing`       | request acknowledged delivery                  |
-| `route`           | `String` or `nothing` | `nothing`       | route ID                                       |
-| `mimetype`        | `String` or `nothing` | `nothing`       | MIME type (sends a `RemoteMessageReq`)         |
-| `messageclass`    | `String` or `nothing` | `nothing`       | message class (sends a `RemoteMessageReq`)     |
-| `remoterecipient` | `String` or `nothing` | `nothing`       | remote recipient (sends a `RemoteMessageReq`)  |
-| `mailbox`         | `String` or `nothing` | `nothing`       | mailbox (sends a `RemoteMessageReq`)           |
+| Property          | Type                   | Default          | Description                                    |
+|:------------------|:-----------------------|:-----------------|:-----------------------------------------------|
+| `timeout`         | `Int`                  | `BLOCKING`       | receive timeout in milliseconds                |
+| `sendmode`        | `Int`                  | `SEMI_BLOCKING`  | send mode (see above)                          |
+| `serviceprovider` | `AgentID` or `nothing` | `nothing` (auto) | agent used for sending datagrams               |
+| `ttl`             | `Float32`              | `NaN32` (unset)  | time-to-live in seconds                        |
+| `priority`        | `Symbol`               | `:NORMAL`        | one of the `Priority.*` constants              |
+| `robustness`      | `Symbol`               | `:NORMAL`        | one of the `Robustness.*` constants            |
+| `reliability`     | `Bool` or `nothing`    | `nothing`        | request acknowledged delivery                  |
+| `route`           | `String` or `nothing`  | `nothing`        | route ID                                       |
+| `mimetype`        | `String` or `nothing`  | `nothing`        | MIME type (sends a `RemoteMessageReq`)         |
+| `messageclass`    | `String` or `nothing`  | `nothing`        | message class (sends a `RemoteMessageReq`)     |
+| `remoterecipient` | `String` or `nothing`  | `nothing`        | remote recipient (sends a `RemoteMessageReq`)  |
+| `mailbox`         | `String` or `nothing`  | `nothing`        | mailbox (sends a `RemoteMessageReq`)           |
 
 ```julia
 sock.reliability = true             # request acknowledged end-to-end delivery
@@ -150,16 +152,22 @@ sock.robustness = Robustness.ROBUST # more robust (slower) coding
 sock.ttl = 60.0                     # time-to-live in seconds
 ```
 The camelCase spellings used in other language bindings (`sock.sendMode`,
-`sock.mimeType`, `sock.messageClass`, `sock.remoteRecipient`) are accepted as aliases.
-Socket state can also be read as properties (`sock.localprotocol`,
-`sock.remoteaddress`, `sock.remoteprotocol`); the function forms from earlier versions
-(`settimeout`, `gettimeout`, `getlocalprotocol`, `getremoteaddress`,
-`getremoteprotocol`) remain available.
+`sock.serviceProvider`, `sock.mimeType`, `sock.messageClass`, `sock.remoteRecipient`)
+are accepted as aliases.
+
+Read-only properties expose the rest of the socket state: `sock.gateway` (the
+underlying fjåge gateway), `sock.localaddress` (the local node address), and
+`sock.localprotocol`, `sock.remoteaddress`, `sock.remoteprotocol` (set via `bind` and
+`connect`).
 
 When any of `mimetype`, `messageclass`, `remoterecipient` or `mailbox` is set, datagrams
 are sent as remote messages (`RemoteMessageReq`) through the remote service. Remote
 messages travel over a fixed protocol number, so `send` with an explicit non-zero
-protocol returns `false` in that case.
+protocol returns `false` in that case. Well-known MIME types are available as
+`MimeType.*` constants (`TEXT`, `BIN`, `CMD`, `CHAT`, `UDP_PORTAL`):
+```julia
+sock.mimetype = MimeType.TEXT       # "text/plain"
+```
 
 ## Receiving datagrams
 
@@ -193,7 +201,7 @@ Unet node, and gives lower-level access to the stack: exchanging arbitrary messa
 agents, looking up agents by service, and getting/setting agent parameters.
 
 ```julia
-gw = getgateway(sock)                          # underlying fjåge Gateway
+gw = sock.gateway                              # underlying fjåge Gateway
 phy = agentforservice(sock, Services.PHYSICAL) # find the physical-layer agent
 phy.MTU                                        # read a parameter
 phy[2].frameLength = 64                        # set an indexed parameter
@@ -211,6 +219,7 @@ documentation for the full gateway API.
 - `Topics` — topics that can be subscribed to (`DATAGRAM`, `PARAMCHANGE`, ...)
 - `Priority` — datagram priorities (`URGENT`, `HIGH`, `NORMAL`, `LOW`, `IDLE`)
 - `Robustness` — datagram robustness (`ROBUST`, `NORMAL`)
+- `MimeType` — well-known MIME types for remote messages (`TEXT`, `BIN`, `CMD`, ...)
 - `Address` — well-known addresses (`BROADCAST`)
 - `ReservationStatus` — channel reservation status indicators
 

@@ -7,11 +7,9 @@ using Reexport
 @reexport using Fjage
 using Dates
 
-export UnetSocket, Protocol, Services, Address, Topics, ReservationStatus, Priority, Robustness
+export UnetSocket, Protocol, Services, Address, Topics, ReservationStatus, Priority, Robustness, MimeType
 export NON_BLOCKING, SEMI_BLOCKING
-export isclosed, getgateway, host, unbind, isbound, connect, disconnect, isconnected, getlocaladdress
-export getlocalprotocol, getremoteaddress, getremoteprotocol, settimeout, gettimeout, cancel
-export getserviceprovider, setserviceprovider
+export isclosed, isbound, isconnected, host, unbind, connect, disconnect, cancel
 
 include("Messages.jl")
 include("Properties.jl")
@@ -108,6 +106,15 @@ module Robustness
   const NORMAL = :NORMAL
 end
 
+"Well-known MIME types for remote messages."
+module MimeType
+  const TEXT = "text/plain"
+  const BIN = "application/octet-stream"
+  const CMD = "application/x-command"
+  const CHAT = "application/x-chat"
+  const UDP_PORTAL = "application/x-udp-portal"
+end
+
 "Status indicator for a particular request during the reservation process."
 module ReservationStatus
   const START = :START        # start of channel reservation for a reservation request
@@ -123,22 +130,36 @@ end
 Open a new UnetSocket via TCP/IP to communicate with UnetStack.
 
 In addition to the socket API functions, a socket carries a set of attributes,
-read and set as properties. `timeout` controls datagram reception; the others
-are applied to all datagrams sent using the socket:
+read and set as properties. `timeout` controls datagram reception,
+`serviceprovider` selects the agent used for sending, and the others are
+applied to all datagrams sent using the socket:
 
-| Property           | Type                  | Default         | Description                                        |
-|:-------------------|:----------------------|:----------------|:---------------------------------------------------|
-| `timeout`          | `Int`                 | `BLOCKING`      | receive timeout in milliseconds                    |
-| `sendmode`         | `Int`                 | `SEMI_BLOCKING` | `NON_BLOCKING`, `SEMI_BLOCKING` or `BLOCKING`      |
-| `ttl`              | `Float32`             | `NaN32` (unset) | time-to-live in seconds                            |
-| `priority`         | `Symbol`              | `:NORMAL`       | one of the `Priority.*` constants                  |
-| `robustness`       | `Symbol`              | `:NORMAL`       | one of the `Robustness.*` constants                |
-| `reliability`      | `Bool` or `nothing`   | `nothing`       | request acknowledged delivery                      |
-| `route`            | `String` or `nothing` | `nothing`       | route ID                                           |
-| `mimetype`         | `String` or `nothing` | `nothing`       | MIME type (sends a `RemoteMessageReq`)             |
-| `messageclass`     | `String` or `nothing` | `nothing`       | message class (sends a `RemoteMessageReq`)         |
-| `remoterecipient`  | `String` or `nothing` | `nothing`       | remote recipient (sends a `RemoteMessageReq`)      |
-| `mailbox`          | `String` or `nothing` | `nothing`       | mailbox (sends a `RemoteMessageReq`)               |
+| Property           | Type                    | Default          | Description                                        |
+|:-------------------|:------------------------|:-----------------|:---------------------------------------------------|
+| `timeout`          | `Int`                   | `BLOCKING`       | receive timeout in milliseconds                    |
+| `sendmode`         | `Int`                   | `SEMI_BLOCKING`  | `NON_BLOCKING`, `SEMI_BLOCKING` or `BLOCKING`      |
+| `serviceprovider`  | `AgentID` or `nothing`  | `nothing` (auto) | agent used for sending datagrams                   |
+| `ttl`              | `Float32`               | `NaN32` (unset)  | time-to-live in seconds                            |
+| `priority`         | `Symbol`                | `:NORMAL`        | one of the `Priority.*` constants                  |
+| `robustness`       | `Symbol`                | `:NORMAL`        | one of the `Robustness.*` constants                |
+| `reliability`      | `Bool` or `nothing`     | `nothing`        | request acknowledged delivery                      |
+| `route`            | `String` or `nothing`   | `nothing`        | route ID                                           |
+| `mimetype`         | `String` or `nothing`   | `nothing`        | MIME type (sends a `RemoteMessageReq`)             |
+| `messageclass`     | `String` or `nothing`   | `nothing`        | message class (sends a `RemoteMessageReq`)         |
+| `remoterecipient`  | `String` or `nothing`   | `nothing`        | remote recipient (sends a `RemoteMessageReq`)      |
+| `mailbox`          | `String` or `nothing`   | `nothing`        | mailbox (sends a `RemoteMessageReq`)               |
+
+Reading `serviceprovider` resolves the provider automatically if one has not
+been set: the remote service is preferred, followed by transport, routing, link
+and physical, in that order. Setting it to `nothing` reverts to automatic
+selection.
+
+Read-only properties: `gateway` (the underlying fjåge gateway, for low-level
+access), `localaddress` (the local node address), and the socket state
+`localprotocol`, `remoteaddress` and `remoteprotocol` (set via `bind` and
+`connect`). The camelCase spellings used in other language bindings
+(`sock.sendMode`, `sock.serviceProvider`, `sock.mimeType`, ...) are accepted
+as aliases.
 
 Example:
 ```julia
@@ -181,6 +202,11 @@ Base.show(io::IO, sock::UnetSocket) = Base.show(io, sock.gw)
 # aliases allow the camelCase attribute names used in other language bindings
 const _aliases = Dict{Symbol,Symbol}(
   :sendMode => :sendmode,
+  :serviceProvider => :serviceprovider,
+  :localAddress => :localaddress,
+  :localProtocol => :localprotocol,
+  :remoteAddress => :remoteaddress,
+  :remoteProtocol => :remoteprotocol,
   :mimeType => :mimetype,
   :messageClass => :messageclass,
   :remoteRecipient => :remoterecipient
@@ -189,10 +215,15 @@ const _aliases = Dict{Symbol,Symbol}(
 const _priorities = (Priority.URGENT, Priority.HIGH, Priority.NORMAL, Priority.LOW, Priority.IDLE)
 const _robustnesses = (Robustness.ROBUST, Robustness.NORMAL)
 const _sendmodes = (NON_BLOCKING, BLOCKING, SEMI_BLOCKING)
+const _readonly = (:gateway, :localaddress, :localprotocol, :remoteaddress, :remoteprotocol)
 
 function Base.setproperty!(sock::UnetSocket, p::Symbol, v)
   p = get(_aliases, p, p)
-  if p === :priority
+  p ∈ _readonly && throw(ArgumentError("$p is a read-only property"))
+  if p === :serviceprovider
+    v isa Union{AgentID, Nothing} || throw(ArgumentError("serviceprovider must be an AgentID or nothing"))
+    return setfield!(sock, :provider, v)
+  elseif p === :priority
     v ∈ _priorities || throw(ArgumentError("priority must be one of the Priority.* constants"))
   elseif p === :robustness
     v ∈ _robustnesses || throw(ArgumentError("robustness must be one of the Robustness.* constants"))
@@ -204,8 +235,17 @@ function Base.setproperty!(sock::UnetSocket, p::Symbol, v)
   setfield!(sock, p, convert(fieldtype(UnetSocket, p), v))
 end
 
-Base.getproperty(sock::UnetSocket, p::Symbol) = getfield(sock, get(_aliases, p, p))
-Base.propertynames(::UnetSocket) = fieldnames(UnetSocket)
+function Base.getproperty(sock::UnetSocket, p::Symbol)
+  p = get(_aliases, p, p)
+  p === :gateway && return getfield(sock, :gw)
+  p === :serviceprovider && return _serviceprovider(sock)
+  p === :localaddress && return _localaddress(sock)
+  getfield(sock, p)
+end
+
+Base.propertynames(::UnetSocket) = (:gateway, :localaddress, :localprotocol, :remoteaddress,
+  :remoteprotocol, :timeout, :sendmode, :serviceprovider, :ttl, :priority, :robustness,
+  :reliability, :route, :mimetype, :messageclass, :remoterecipient, :mailbox)
 
 "Close the socket."
 function close(sock::UnetSocket)
@@ -227,7 +267,7 @@ protocols.
 """
 function bind(sock::UnetSocket, protocol::Integer)
   if protocol == Protocol.DATA || (protocol >= Protocol.USER && protocol <= Protocol.MAX)
-    sock.localprotocol = protocol
+    setfield!(sock, :localprotocol, Int(protocol))
     return true
   end
   return false
@@ -235,7 +275,8 @@ end
 
 "Unbinds a socket so that it listens to all unreserved protocols."
 function unbind(sock::UnetSocket)
-  sock.localprotocol = -1
+  setfield!(sock, :localprotocol, -1)
+  nothing
 end
 
 "Checks if a socket is bound."
@@ -250,8 +291,8 @@ send() calls.
 """
 function connect(sock::UnetSocket, to::Integer, protocol::Integer)
   if to >= 0 && (protocol == Protocol.DATA || (protocol >= Protocol.USER && protocol <= Protocol.MAX))
-    sock.remoteaddress = to
-    sock.remoteprotocol = protocol
+    setfield!(sock, :remoteaddress, Int(to))
+    setfield!(sock, :remoteprotocol, Int(protocol))
     return true
   end
   return false
@@ -259,8 +300,9 @@ end
 
 "Resets the default destination address to undefined, and the default protocol number to Protocol.DATA."
 function disconnect(sock::UnetSocket)
-  sock.remoteaddress = -1
-  sock.remoteprotocol = 0
+  setfield!(sock, :remoteaddress, -1)
+  setfield!(sock, :remoteprotocol, 0)
+  nothing
 end
 
 "Checks if a socket is connected, i.e., has a default destination address and protocol number."
@@ -268,59 +310,20 @@ function isconnected(sock::UnetSocket)
   return sock.remoteaddress >= 0
 end
 
-"Gets the local node address."
-function getlocaladdress(sock::UnetSocket)
-  if sock.gw === nothing
-    return -1
-  end
+# local node address, backing the read-only localaddress property
+function _localaddress(sock::UnetSocket)
+  sock.gw === nothing && return -1
   nodeinfo = agentforservice(sock.gw, Services.NODE_INFO)
-  if nodeinfo === nothing
-    return -1
-  end
+  nodeinfo === nothing && return -1
   req = ParameterReq(recipient=nodeinfo, param="address")
   rsp = request(sock.gw, req, REQUEST_TIMEOUT)
-  if rsp === nothing
-    return -1
-  end
+  rsp === nothing && return -1
   return rsp.value
 end
 
-"Gets the protocol number that the socket is bound to."
-function getlocalprotocol(sock::UnetSocket)
-  return sock.localprotocol
-end
-
-"Gets the default destination node address for a connected socket."
-function getremoteaddress(sock::UnetSocket)
-  return sock.remoteaddress
-end
-
-"Gets the default transmission protocol number."
-function getremoteprotocol(sock::UnetSocket)
-  return sock.remoteprotocol
-end
-
-"""
-Sets the timeout for datagram reception. The default timeout is infinite.
-i.e., the receive() call blocks forever. A timeout of 0 means the
-receive() call is non-blocking. Negative timeout is considered infinite.
-"""
-function settimeout(sock::UnetSocket, ms::Integer)
-  sock.timeout = ms
-end
-
-"Gets the timeout for datagram reception."
-function gettimeout(sock::UnetSocket)
-  return sock.timeout
-end
-
-"""
-Gets the service provider AgentID used for sending datagrams. If a provider
-has not been set explicitly, one is chosen automatically: the remote service
-is preferred, followed by transport, routing, link and physical, in that
-order.
-"""
-function getserviceprovider(sock::UnetSocket)
+# service provider used for sending datagrams, backing the serviceprovider
+# property; resolved automatically if not set explicitly
+function _serviceprovider(sock::UnetSocket)
   sock.gw === nothing && return nothing
   if sock.provider === nothing
     providers = agentsforservice(sock.gw, Services.DATAGRAM)
@@ -335,15 +338,6 @@ function getserviceprovider(sock::UnetSocket)
     sock.provider = p
   end
   return sock.provider
-end
-
-"""
-Sets the service provider AgentID used for sending datagrams. Set to `nothing`
-to revert to automatic selection.
-"""
-function setserviceprovider(sock::UnetSocket, provider::Union{AgentID, Nothing})
-  sock.provider = provider
-  nothing
 end
 
 # create a DatagramReq (or RemoteMessageReq, if remote message attributes are
@@ -407,7 +401,7 @@ function Fjage.send(sock::UnetSocket, req::Message)
   req isa DatagramReq || return false
   protocol = req.protocol
   (protocol == Protocol.DATA || (protocol >= Protocol.USER && protocol <= Protocol.MAX)) || return false
-  provider = getserviceprovider(sock)
+  provider = sock.serviceprovider
   provider === nothing && return false
   # unlike the Java API, an explicitly set recipient is respected here
   req.recipient === nothing && (req.recipient = provider)
@@ -464,11 +458,6 @@ function cancel(sock::UnetSocket)
     send(sock.gw, DatagramNtf(recipient=AgentID(sock.gw), protocol=-1))
   end
   nothing
-end
-
-"Gets a Gateway to provide low-level access to UnetStack."
-function getgateway(sock::UnetSocket)
-  return sock.gw
 end
 
 "Gets an AgentID providing a specified service for low-level access to UnetStack."
