@@ -20,6 +20,11 @@ import Sockets
   @test Priority.HIGH === :HIGH
   @test Robustness.ROBUST === :ROBUST
   @test ReservationStatus.START === :START
+  @test MimeType.TEXT == "text/plain"
+  @test MimeType.BIN == "application/octet-stream"
+  @test MimeType.CMD == "application/x-command"
+  @test MimeType.CHAT == "application/x-chat"
+  @test MimeType.UDP_PORTAL == "application/x-udp-portal"
   @test NON_BLOCKING == 0
   @test BLOCKING == -1
   @test SEMI_BLOCKING == -2
@@ -73,7 +78,7 @@ function waitforstack(port; timeout=60)
     try
       s = UnetSocket(ip, port)
       try
-        if getlocaladdress(s) >= 0 && agentforservice(s, Services.PHYSICAL) !== nothing
+        if s.localaddress >= 0 && agentforservice(s, Services.PHYSICAL) !== nothing
           return true
         end
       finally
@@ -97,7 +102,7 @@ try
 
   @testset "socket" begin
     s = UnetSocket(ip, 1101)
-    @test getlocaladdress(s) == 232
+    @test s.localaddress == 232
     @test host(s, "A") == 232
     @test host(s, "B") == 31
     @test !isclosed(s)
@@ -107,7 +112,7 @@ try
 
   @testset "gateway" begin
     s = UnetSocket(ip, 1101)
-    gw = getgateway(s)
+    gw = s.gateway
     @test gw isa Fjage.Gateway
     shell = agentforservice(gw, Services.SHELL)
     @test shell isa AgentID
@@ -176,49 +181,49 @@ try
     @test_throws ArgumentError s.sendmode = 42
     s.timeout = -5
     @test s.timeout == -1
-    settimeout(s, 1000)
-    @test gettimeout(s) == 1000
-    settimeout(s, -5)
-    @test gettimeout(s) == -1
+    s.timeout = 1000
+    @test s.timeout == 1000
+    s.timeout = -5
+    @test s.timeout == -1
     close(s)
   end
 
   @testset "bind/connect" begin
     s = UnetSocket(ip, 1101)
-    @test getlocalprotocol(s) == -1
+    @test s.localprotocol == -1
     @test !isbound(s)
     @test bind(s, 42)
     @test isbound(s)
-    @test getlocalprotocol(s) == 42
+    @test s.localprotocol == 42
     unbind(s)
     @test !isbound(s)
-    @test getlocalprotocol(s) == -1
-    @test getremoteaddress(s) == -1
-    @test getremoteprotocol(s) == 0
+    @test s.localprotocol == -1
+    @test s.remoteaddress == -1
+    @test s.remoteprotocol == 0
     @test !isconnected(s)
     @test connect(s, 31, 0)
-    @test getremoteaddress(s) == 31
-    @test getremoteprotocol(s) == 0
+    @test s.remoteaddress == 31
+    @test s.remoteprotocol == 0
     @test isconnected(s)
     disconnect(s)
     @test !isconnected(s)
-    @test getremoteaddress(s) == -1
-    @test getremoteprotocol(s) == 0
+    @test s.remoteaddress == -1
+    @test s.remoteprotocol == 0
     close(s)
   end
 
   @testset "timeouts" begin
     s = UnetSocket(ip, 1101)
     @test bind(s, 0)
-    @test gettimeout(s) == -1
-    settimeout(s, 1000)
-    @test gettimeout(s) == 1000
+    @test s.timeout == -1
+    s.timeout = 1000
+    @test s.timeout == 1000
     t1 = now().instant
     @test receive(s) == nothing
     dt = now().instant - t1
     @test dt.value > 1000
-    settimeout(s, 0)
-    @test gettimeout(s) == 0
+    s.timeout = 0
+    @test s.timeout == 0
     t1 = now().instant
     @test receive(s) == nothing
     dt = now().instant - t1
@@ -228,7 +233,7 @@ try
 
   @testset "cancel" begin
     s = UnetSocket(ip, 1101)
-    settimeout(s, 7000)
+    s.timeout = 7000
     @test bind(s, 0)
     t1 = now().instant
     @async begin
@@ -246,18 +251,21 @@ try
     s = UnetSocket(ip, 1101)
     s2 = UnetSocket(ip, 1102)
     @test bind(s2, Protocol.USER)
-    settimeout(s2, 10000)
-    p = getserviceprovider(s)
+    s2.timeout = 10000
+    p = s.serviceprovider
     @test p isa AgentID
     phy = agent(s, "phy")
-    setserviceprovider(s, phy)
-    @test getserviceprovider(s) == phy
+    s.serviceprovider = phy
+    @test s.serviceprovider == phy
     @test send(s, [1,2,3], 31, Protocol.USER)
     ntf = receive(s2)
     @test ntf isa DatagramNtf
     @test ntf.data == [1,2,3]
-    setserviceprovider(s, nothing)
-    @test getserviceprovider(s) isa AgentID
+    s.serviceProvider = nothing            # camelCase alias
+    @test s.serviceprovider isa AgentID
+    @test_throws ArgumentError s.serviceprovider = 42
+    @test_throws ArgumentError s.gateway = nothing
+    @test_throws ArgumentError s.localprotocol = 42
     close(s)
     close(s2)
   end
@@ -266,7 +274,7 @@ try
     s1 = UnetSocket(ip, 1101)
     s2 = UnetSocket(ip, 1102)
     @test bind(s2, Protocol.USER)
-    settimeout(s2, 5000)
+    s2.timeout = 5000
     @test !send(s1, [1,2,3])
     @test send(s1, [1,2,3], 31)
     @test receive(s2) == nothing
@@ -305,7 +313,7 @@ try
     s1 = UnetSocket(ip, 1101)
     s2 = UnetSocket(ip, 1102)
     @test bind(s2, Protocol.USER)
-    settimeout(s2, 10000)
+    s2.timeout = 10000
     s1.sendmode = NON_BLOCKING
     @test send(s1, [1,2,3], 31, Protocol.USER)
     ntf = receive(s2)
@@ -331,14 +339,14 @@ try
   @testset "remote message" begin
     s1 = UnetSocket(ip, 1101)
     s2 = UnetSocket(ip, 1102)
-    settimeout(s2, 10000)
-    s1.mimetype = "text/plain"
+    s2.timeout = 10000
+    s1.mimetype = MimeType.TEXT
     @test !send(s1, Vector{UInt8}("hello"), 31, Protocol.USER)  # remote messages have a fixed protocol
     @test send(s1, Vector{UInt8}("hello"), 31)
     ntf = receive(s2)
     @test ntf isa RemoteMessageNtf
     @test String(copy(ntf.data)) == "hello"
-    @test ntf.mimeType == "text/plain"
+    @test ntf.mimeType == MimeType.TEXT
     close(s1)
     close(s2)
   end
@@ -347,7 +355,7 @@ try
     s1 = UnetSocket(ip, 1101)
     s2 = UnetSocket(ip, 1102)
     @test bind(s2, Protocol.USER + 1)
-    settimeout(s2, 3000)
+    s2.timeout = 3000
     @async begin                     # datagrams that are filtered out by the bound protocol
       sleep(1)
       send(s1, [1], 31, Protocol.USER)
