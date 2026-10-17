@@ -149,6 +149,10 @@ Fjage.@message "org.arl.unet.bb.TxBasebandSignalReq" :REQUEST struct TxBasebandS
     msg.signal = signal
     msg
   end
+  # no signal: transmit only the preamble
+  function TxBasebandSignalReq(txStartTime, wakeup, powerLevel, signal::Nothing, fc, fs, channels, preamble, messageID, performative, sender, recipient, inReplyTo, sentAt)
+    new(txStartTime, wakeup, powerLevel, nothing, fc, fs, channels, preamble, messageID, performative, sender, recipient, inReplyTo, sentAt)
+  end
   ### end manual editing
 end
 

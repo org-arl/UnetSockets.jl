@@ -40,6 +40,17 @@ end
   @test rmr isa DatagramReq
   @test rmr.mimeType == "application/octet-stream"
   @test RemoteMessageNtf() isa DatagramNtf
+  # preamble-only transmission: no signal
+  tx = TxBasebandSignalReq(preamble=1)
+  @test tx.signal === nothing
+  @test tx.preamble == 1
+  _, data = UnetSockets.Fjage._prepare(tx)
+  @test !haskey(data, :signal)
+  @test data[:preamble] == 1
+  # with a signal, as before
+  tx = TxBasebandSignalReq(preamble=1, signal=zeros(ComplexF32, 16))
+  @test size(tx.signal) == (16, 1)
+  @test haskey(UnetSockets.Fjage._prepare(tx)[2], :signal)
 end
 
 # tests that need a 2-node simulation, from a built UnetStack distribution
